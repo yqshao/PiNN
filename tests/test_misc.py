@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-q
+# -*- coding: utf-8 -*-
 
-import tempfile, os
+import tempfile, os, pytest
 import tensorflow as tf
 import numpy as np
 from shutil import rmtree
 
 
+@pytest.mark.forked
 def test_potential_model():
     """A simple example to test training and using a potential"""
     from ase import Atoms    
@@ -73,6 +74,7 @@ def test_potential_model():
     rmtree(tmp, ignore_errors=True)    
 
 
+@pytest.mark.forked
 def test_derivitives():
     """ Test the calcualted derivitives: forces and stress
     with a LJ calculator against ASE's implementation
@@ -98,15 +100,18 @@ def test_derivitives():
         f_pinn, e_pinn = atoms.get_forces(), atoms.get_potential_energy()
         atoms.set_calculator(LennardJones())
         f_ase, e_ase = atoms.get_forces(), atoms.get_potential_energy()
-        assert np.all(np.abs(f_pinn-f_ase)<1e-3)
+        assert np.allclose(f_pinn, f_ase, rtol=1e-2)
+        assert np.allclose(e_pinn, e_ase, rtol=1e-2)
         assert np.abs(e_pinn-e_ase)<1e-3
         if np.any(atoms.pbc):
             atoms.set_calculator(pi_lj)
             s_pinn = atoms.get_stress()
             atoms.set_calculator(LennardJones())
             s_ase = atoms.get_stress()
-            assert np.all(np.abs(s_pinn-s_ase)<1e-3)
+            assert np.allclose(s_pinn, s_ase, rtol=1e-2)
 
+
+@pytest.mark.forked
 def test_clist_nl():
     """Cell list neighbor test
     Compare with ASE implementation
@@ -114,7 +119,7 @@ def test_clist_nl():
     from ase.build import bulk
     from ase.neighborlist import neighbor_list
     from pinn.layers import cell_list_nl
-    
+
     to_test = [bulk('Cu'), bulk('Mg'), bulk('Fe')]
     ind, coord, cell = [],[],[]
     for i, a in enumerate(to_test):
@@ -122,19 +127,15 @@ def test_clist_nl():
         coord.append(a.positions)
         cell.append(a.cell)
 
-    with tf.Graph().as_default():
-        tensors = {
-            'ind_1': tf.constant(np.concatenate(ind, axis=0), tf.int32),
-            'coord': tf.constant(np.concatenate(coord, axis=0), tf.float32),
-            'cell': tf.constant(np.stack(cell, axis=0), tf.float32)}
-        nl = cell_list_nl(tensors, rc=10)
-        with tf.Session() as sess:
-            dist_pinn = sess.run(nl['dist'])
+    tensors = {
+        'ind_1': tf.constant(np.concatenate(ind, axis=0), tf.int32),
+        'coord': tf.constant(np.concatenate(coord, axis=0), tf.float32),
+        'cell': tf.constant(np.stack(cell, axis=0), tf.float32)}
+    nl = cell_list_nl(tensors, rc=10)
+    dist_pinn = nl['dist'].numpy()
 
     dist_ase = []
     for a in to_test:
         dist_ase.append(neighbor_list('d', a, 10))
     dist_ase = np.concatenate(dist_ase,0)
-    assert np.all(np.sort(dist_ase)-np.sort(dist_pinn)<1e-4)
-    
-
+    assert np.allclose(np.sort(dist_ase), np.sort(dist_pinn), rtol=5e-3)

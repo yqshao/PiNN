@@ -5,7 +5,7 @@ from pinn.layers import cell_list_nl, cutoff_func
 
 
 @pi_named('G2_symm_func')
-def G2_SF(tensors, Rs, eta, i, j):
+def G2_SF(tensors, GTAPE, Rs, eta, i, j):
     """ BP-style G2 symmetry functions.
 
     Args:
@@ -58,7 +58,7 @@ def G2_SF(tensors, Rs, eta, i, j):
     sf = tf.exp(-eta*(R-Rs)**2)*fc
     fp = tf.scatter_nd(tf.expand_dims(i_rind, 1), sf,
                        [tf.reduce_max(a_rind)+1, n_sf])
-    jacob = tf.stack([tf.gradients(sf[:, i], tensors['diff'])[0]
+    jacob = tf.stack([GTAPE.gradient(sf[:, i], tensors['diff'])
                       for i in range(n_sf)], axis=2)
     jacob = tf.gather_nd(jacob, tf.expand_dims(p_ind, 1))
     jacob_ind = tf.stack([p_ind, i_rind], axis=1)
@@ -66,7 +66,7 @@ def G2_SF(tensors, Rs, eta, i, j):
 
 
 @pi_named('G3_symm_func')
-def G3_SF(tensors, cutoff_type, rc, lambd, zeta, eta, i="ALL", j="ALL", k="ALL"):
+def G3_SF(tensors, GTAPE, cutoff_type, rc, lambd, zeta, eta, i="ALL", j="ALL", k="ALL"):
     """BP-style G3 symmetry functions.
 
     NOTE(YS): here diff_jk is calculated through diff_ik - diff_ij instead of 
@@ -159,9 +159,9 @@ def G3_SF(tensors, cutoff_type, rc, lambd, zeta, eta, i="ALL", j="ALL", k="ALL")
     # Generate Jacobian
     n_sf = sf.shape[-1]
     p_ind, p_uniq_idx = tf.unique(tf.concat([ind_ij, ind_ik], axis=0))
-    i_rind = tf.unsorted_segment_max(
+    i_rind = tf.math.unsorted_segment_max(
         tf.concat([i_rind, i_rind], axis=0), p_uniq_idx, tf.shape(p_ind)[0])
-    jacob = tf.stack([tf.gradients(sf[:, i], tensors['diff'])[0]
+    jacob = tf.stack([GTAPE.gradient(sf[:, i], tensors['diff'])
                       for i in range(n_sf)], axis=2)
     jacob = tf.gather_nd(jacob, tf.expand_dims(p_ind, 1))
     jacob_ind = tf.stack([p_ind, i_rind], axis=1)
@@ -169,7 +169,7 @@ def G3_SF(tensors, cutoff_type, rc, lambd, zeta, eta, i="ALL", j="ALL", k="ALL")
 
 
 @pi_named('G4_symm_func')
-def G4_SF(tensors, lambd, zeta, eta, i="ALL", j="ALL", k="ALL"):
+def G4_SF(tensors, GTAPE, lambd, zeta, eta, i="ALL", j="ALL", k="ALL"):
     """BP-style G4 symmetry functions.
 
     lambd, eta should have the same length,
@@ -245,9 +245,9 @@ def G4_SF(tensors, lambd, zeta, eta, i="ALL", j="ALL", k="ALL"):
 
     n_sf = sf.shape[-1]
     p_ind, p_uniq_idx = tf.unique(tf.concat([ind_ij, ind_ik], axis=0))
-    i_rind = tf.unsorted_segment_max(
+    i_rind = tf.math.unsorted_segment_max(
         tf.concat([i_rind, i_rind], axis=0), p_uniq_idx, tf.shape(p_ind)[0])
-    jacob = tf.stack([tf.gradients(sf[:, i], tensors['diff'])[0]
+    jacob = tf.stack([GTAPE.gradient(sf[:, i], tensors['diff'])
                       for i in range(n_sf)], axis=2)
     jacob = tf.gather_nd(jacob, tf.expand_dims(p_ind, 1))
     jacob_ind = tf.stack([p_ind, i_rind], axis=1)
@@ -261,7 +261,7 @@ def _form_triplet(tensors):
     n_atoms = tf.shape(tensors['ind_1'])[0]
     n_pairs = tf.shape(tensors['ind_2'])[0]
     p_aind = tf.cumsum(tf.ones(n_pairs, tf.int32))
-    p_rind = p_aind - tf.gather(tf.segment_min(p_aind, p_iind), p_iind)
+    p_rind = p_aind - tf.gather(tf.math.segment_min(p_aind, p_iind), p_iind)
     t_dense = tf.scatter_nd(tf.stack([p_iind, p_rind], axis=1), p_aind,
                             [n_atoms, tf.reduce_max(p_rind)+1])
     t_dense = tf.gather(t_dense, p_iind)
@@ -274,7 +274,7 @@ def _form_triplet(tensors):
 
 
 @pi_named('bp_symm_func')
-def bp_symm_func(tensors, sf_spec, rc, cutoff_type):
+def bp_symm_func(tensors, GTAPE, sf_spec, rc, cutoff_type):
     """ Wrapper for building Behler-style symmetry functions"""
     sf_func = {'G2': G2_SF, 'G3': G3_SF, 'G4': G4_SF}
     fps = {}
@@ -283,7 +283,7 @@ def bp_symm_func(tensors, sf_spec, rc, cutoff_type):
         if sf['type'] == 'G3':  # Workaround for G3 only
             options.update({'rc': rc, 'cutoff_type': cutoff_type})
         fp, jacob, jacob_ind = sf_func[sf['type']](
-            tensors,  **options)
+            tensors, GTAPE, **options)
         fps['fp_{}'.format(i)] = fp
         fps['jacob_{}'.format(i)] = jacob
         fps['jacob_ind_{}'.format(i)] = jacob_ind
@@ -376,10 +376,12 @@ def bpnn(tensors, sf_spec, nn_spec,
         prediction or preprocessed tensor dictionary
     """
     if 'ind_2' not in tensors:
-        tensors.update(cell_list_nl(tensors, rc))
-        connect_dist_grad(tensors)
-        tensors['cutoff_func'] = cutoff_func(tensors['dist'], cutoff_type, rc)
-        tensors.update(bp_symm_func(tensors, sf_spec, rc, cutoff_type))
+        with tf.GradientTape(persistent=True) as GTAPE:
+            tensors.update(cell_list_nl(tensors, rc))
+            GTAPE.watch(tensors['diff'])
+            connect_dist_grad(tensors)
+            tensors['cutoff_func'] = cutoff_func(tensors['dist'], cutoff_type, rc)
+            tensors.update(bp_symm_func(tensors, GTAPE, sf_spec, rc, cutoff_type))
         if preprocess:
             tensors.pop('dist')
             tensors.pop('cutoff_func')
@@ -392,11 +394,11 @@ def bpnn(tensors, sf_spec, nn_spec,
     n_atoms = tf.shape(tensors['elems'])[0]
     for k, v in nn_spec.items():
         ind = tf.where(tf.equal(tensors['elems'], k))
-        with tf.variable_scope("BP_DENSE_{}".format(k)):
+        with tf.compat.v1.variable_scope("BP_DENSE_{}".format(k)):
             nodes = fps[k]
             for n_node in v:
-                nodes = tf.layers.dense(nodes, n_node, activation=act)
-            atomic_en = tf.layers.dense(nodes, 1, activation=None,
+                nodes = tf.compat.v1.layers.dense(nodes, n_node, activation=act)
+            atomic_en = tf.compat.v1.layers.dense(nodes, 1, activation=None,
                                         use_bias=False, name='E_OUT_{}'.format(k))
-        output += tf.unsorted_segment_sum(atomic_en[:, 0], ind[:, 0], n_atoms)
+        output += tf.math.unsorted_segment_sum(atomic_en[:, 0], ind[:, 0], n_atoms)
     return output

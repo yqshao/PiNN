@@ -57,7 +57,7 @@ def ip_layer(ind, nodes, n_prop,
     Return:
         Feature nodes of order n-1
     """
-    prop = tf.unsorted_segment_sum(nodes, ind[:, 0], n_prop)
+    prop = tf.math.unsorted_segment_sum(nodes, ind[:, 0], n_prop)
     return prop
 
 
@@ -76,7 +76,7 @@ def fc_layer(nodes,
         Nodes after the fc layers
     """
     for i, n_out in enumerate(n_nodes):
-        nodes = tf.layers.dense(nodes, n_out, activation=act, use_bias=use_bias,
+        nodes = tf.compat.v1.layers.dense(nodes, n_out, activation=act, use_bias=use_bias,
                                 name='dense-{}'.format(i))
     return nodes
 
@@ -93,10 +93,10 @@ def en_layer(nodes, n_nodes, act='tanh'):
         atomic prediction with shape (natoms)
     """
     for i, n_out in enumerate(n_nodes):
-        nodes = tf.layers.dense(nodes, n_out, activation=act,
+        nodes = tf.compat.v1.layers.dense(nodes, n_out, activation=act,
                                 name='dense-{}'.format(i))
 
-    nodes = tf.layers.dense(nodes, 1, use_bias=False,
+    nodes = tf.compat.v1.layers.dense(nodes, 1, use_bias=False,
                             activation=None, name='E_OUT')
 
     return tf.squeeze(nodes, -1)
@@ -165,7 +165,7 @@ def pinet(tensors, pp_nodes=[16, 16], pi_nodes=[16, 16],
         nodes[2] = fc_layer(nodes[2], ii_nodes, use_bias=False,
                             act=act, name='ii-{}'.format(i))
         if nodes[1].shape[-1] != nodes[2].shape[-1]:
-            nodes[1] = tf.layers.dense(nodes[1], nodes[2].shape[-1],
+            nodes[1] = tf.compat.v1.layers.dense(nodes[1], nodes[2].shape[-1],
                                        use_bias=False, activation=None)
         nodes[1] = tf.add(
             nodes[1], ip_layer(ind_2, nodes[2], natom, name='ip_{}'.format(i)),

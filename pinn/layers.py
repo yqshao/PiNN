@@ -23,8 +23,8 @@ def _displace_matrix(max_repeat):
 
 def _pbc_repeat(tensors, rc):
     """This is a helper function for cell_list_nl"""
-    n_repeat = rc * tf.norm(tf.matrix_inverse(tensors['cell']), axis=1)
-    n_repeat = tf.cast(tf.ceil(n_repeat), tf.int32)
+    n_repeat = rc * tf.norm(tf.linalg.inv(tensors['cell']), axis=1)
+    n_repeat = tf.cast(tf.math.ceil(n_repeat), tf.int32)
     max_repeat = tf.reduce_max(n_repeat, axis=0)
     disp_mat = _displace_matrix(max_repeat)
 
@@ -90,14 +90,14 @@ def cell_list_nl(tensors, rc=5.0):
     # Get the atom's relative index(rind) and position(rpos) in cell
     # And each cell's atom list (alst)
     atom_cind = tf.gather_nd(samp_cind, atom_cpos) - 1
-    atom_cind_args = tf.contrib.framework.argsort(atom_cind, axis=0)
+    atom_cind_args = tf.argsort(atom_cind, axis=0)
     atom_cind_sort = tf.gather(atom_cind, atom_cind_args)
 
     atom_rind_sort = tf.cumsum(tf.ones_like(atom_cind, tf.int32))
-    cell_rind_min = tf.segment_min(atom_rind_sort, atom_cind_sort)
+    cell_rind_min = tf.math.segment_min(atom_rind_sort, atom_cind_sort)
     atom_rind_sort = atom_rind_sort - tf.gather(cell_rind_min, atom_cind_sort)
     atom_rpos_sort = tf.stack([atom_cind_sort, atom_rind_sort], axis=1)
-    atom_rpos = tf.unsorted_segment_sum(atom_rpos_sort, atom_cind_args,
+    atom_rpos = tf.math.unsorted_segment_sum(atom_rpos_sort, atom_cind_args,
                                         tf.shape(atom_gind)[0])
     cell_alst_shap = [tf.shape(cell_cind)[0], tf.reduce_max(samp_ccnt), 1]
     cell_alst = tf.squeeze(tf.scatter_nd(
@@ -156,7 +156,7 @@ def atomic_dress(tensors, dress, dtype=tf.float32):
         indices = tf.cast(tf.equal(elem, k), dtype)
         e_dress += indices * tf.cast(val, dtype)
     n_batch = tf.reduce_max(tensors['ind_1'])+1
-    e_dress = tf.unsorted_segment_sum(
+    e_dress = tf.math.unsorted_segment_sum(
         e_dress, tensors['ind_1'][:, 0], n_batch)
     return e_dress
 

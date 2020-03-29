@@ -5,11 +5,10 @@ import pytest
 import numpy as np
 import tensorflow as tf
 from pinn.io import load_numpy, sparse_batch
-from helpers import assert_almost_equal
 from shutil import rmtree
 from ase import Atoms
 
-
+@pytest.mark.forked
 def test_pinn_potential():
     testpath = tempfile.mkdtemp()
     network_params = {
@@ -33,6 +32,7 @@ def test_pinn_potential():
     rmtree(testpath)
 
 
+@pytest.mark.forked
 def test_bpnn_potential():
     testpath = tempfile.mkdtemp()
     network_params = {
@@ -60,6 +60,7 @@ def test_bpnn_potential():
     rmtree(testpath)
 
 
+@pytest.mark.forked
 def test_bpnn_potential_pre_cond():
     from pinn.networks import bpnn
 
@@ -80,16 +81,14 @@ def test_bpnn_potential_pre_cond():
     def pre_fn(tensors): return bpnn(
         tensors, preprocess=True, **network_params)
 
-    # tf.keras.backend.clear_session()
-    tf.get_default_graph()._unsafe_unfinalize()
-    batch = load_numpy(_get_lj_data(), split=1)\
-        .apply(sparse_batch(10)).map(pre_fn).make_one_shot_iterator().get_next()
-    with tf.Session() as sess:
-        batches = [sess.run(batch) for i in range(100)]
+    dataset = load_numpy(_get_lj_data(), split=1)\
+        .apply(sparse_batch(10)).map(pre_fn)
+
+    batches = [tensors for tensors in dataset]
     fp_range = []
     for i in range(len(network_params['sf_spec'])):
-        fp_max = max([b[f'fp_{i}'].max() for b in batches])
-        fp_min = max([b[f'fp_{i}'].min() for b in batches])
+        fp_max = max([b[f'fp_{i}'].numpy().max() for b in batches])
+        fp_min = max([b[f'fp_{i}'].numpy().min() for b in batches])
         fp_range.append([float(fp_min), float(fp_max)])
 
     network_params['fp_scale'] = True
@@ -163,12 +162,12 @@ def _potential_tests(params):
     f_pred = np.array(f_pred)
     e_pred = np.array(e_pred)
 
-    assert_almost_equal(results['METRICS/F_RMSE']/params['model_params']['e_scale'],
+    assert np.allclose(results['METRICS/F_RMSE']/params['model_params']['e_scale'],
                         np.sqrt(np.mean((f_pred/params['model_params']['e_unit']
-                                         - data['f_data'])**2)))
-    assert_almost_equal(results['METRICS/E_RMSE']/params['model_params']['e_scale'],
-                        np.sqrt(np.mean((e_pred/params['model_params']['e_unit']
-                                         - data['e_data'])**2)))
+                                         - data['f_data'])**2)), rtol=5e-3)
+    assert np.allclose(results['METRICS/E_RMSE']/params['model_params']['e_scale'],
+                       np.sqrt(np.mean((e_pred/params['model_params']['e_unit']
+                                        - data['e_data'])**2)), rtol=5e-3)
 
     # Test energy conservation
     e_pred, f_pred = [], []
@@ -183,7 +182,7 @@ def _potential_tests(params):
 
     de = e_pred[-1] - e_pred[0]
     int_f = np.trapz(f_pred[:, 0, 0], x=x_a_range)
-    assert_almost_equal(de, -int_f)
+    assert np.allclose(de, -int_f, rtol=5e-3)
 
     # Test virial pressure
     e_pred, p_pred = [], []
@@ -199,4 +198,4 @@ def _potential_tests(params):
 
     de = e_pred[-1] - e_pred[0]
     int_p = np.trapz(p_pred, x=l_range**3)
-    assert_almost_equal(de, int_p)
+    assert np.allclose(de, int_p, rtol=5e-3)

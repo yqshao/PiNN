@@ -23,7 +23,7 @@ def get_atomic_dress(dataset, elems, max_iter=None):
     count = tf.equal(tf.expand_dims(
         tensors['elems'], 1), tf.expand_dims(elems, 0))
     count = tf.cast(count, tf.int32)
-    count = tf.segment_sum(count, tensors['ind_1'][:, 0])
+    count = tf.math.segment_sum(count, tensors['ind_1'][:, 0])
     sess = tf.Session()
     x, y = [], []
     it = 0
@@ -49,7 +49,7 @@ def pi_named(default_name='unnamed'):
     def decorator(func):
         @wraps(func)
         def named_layer(*args, name=default_name, **kwargs):
-            with tf.variable_scope(name):
+            with tf.compat.v1.variable_scope(name):
                 return func(*args, **kwargs)
         return named_layer
     return decorator
@@ -139,8 +139,8 @@ def _connect_diff_grad(coord, diff, ind):
             # handle sparse gradient inputs
             ind = tf.gather_nd(ind, tf.expand_dims(ddiff.indices, 1))
             ddiff = ddiff.values
-        dcoord = tf.unsorted_segment_sum(ddiff, ind[:, 1], natoms)
-        dcoord -= tf.unsorted_segment_sum(ddiff, ind[:, 0], natoms)
+        dcoord = tf.math.unsorted_segment_sum(ddiff, ind[:, 1], natoms)
+        dcoord -= tf.math.unsorted_segment_sum(ddiff, ind[:, 0], natoms)
         return dcoord, None, None
     return tf.identity(diff), lambda ddiff: _grad(ddiff, coord, diff, ind)
 
