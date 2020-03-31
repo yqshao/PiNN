@@ -9,7 +9,7 @@ import tensorflow as tf
 import numpy as np
 
 from pinn.layers import atomic_dress
-from pinn.utils import pi_named
+from pinn.utils import pi_named, connect_dist_grad
 
 default_params = {
     ### Scaling and units
@@ -104,7 +104,11 @@ def _potential_model_fn(features, labels, mode, params):
     network_params = params['network_params']
     model_params = default_params.copy()
     model_params.update(params['model_params'])
-    pred = network_fn(features, **network_params)
+
+    network = network_fn(**network_params)
+    features = network.preprocess(features)
+    connect_dist_grad(features)
+    pred = network(features)
 
     ind = features['ind_1']  # ind_1 => id of molecule for each atom
     nbatch = tf.reduce_max(ind)+1

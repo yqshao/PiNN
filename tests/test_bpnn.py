@@ -43,7 +43,7 @@ def test_sfs():
     # test the BP symmetry functions against manual calculations
     # units in the original runner format is Bohr
     from helpers import get_trivial_runner_ds
-    from pinn.networks import bpnn
+    from pinn.networks.bpnn import BPNN
     from pinn.io import sparse_batch
 
     bohr2ang = 0.5291772109
@@ -58,10 +58,8 @@ def test_sfs():
     ]
     nn_spec = {8: [35, 35], 1: [35, 35]}
     tensors = next(iter(dataset))
-    tensors = bpnn(tensors,
-                   sf_spec=sf_spec, nn_spec=nn_spec, rc=12*bohr2ang,
-                   preprocess=True)
-
+    bpnn = BPNN(sf_spec=sf_spec, nn_spec=nn_spec, rc=12*bohr2ang)
+    tensors = bpnn.preprocess(tensors)
     g2_a, g3_a, g4_a = _manual_sfs()
     assert np.allclose(tensors['fp_0'][0], g2_a, rtol=5e-3)
     assert np.allclose(tensors['fp_1'][0], g3_a, rtol=5e-3)
@@ -71,7 +69,7 @@ def test_sfs():
 def test_jacob_bpnn():
     """Check BPNN jacobian calculation"""
     from ase.collections import g2
-    from pinn.networks import bpnn
+    from pinn.networks.bpnn import BPNN
 
     # Define the test case
     sf_spec = [
@@ -104,10 +102,11 @@ def test_jacob_bpnn():
         "cell":  tf.constant(water.cell[np.newaxis, :, :], tf.float32)
     }
 
+    bpnn = BPNN(sf_spec, nn_spec)
     with tf.GradientTape() as g:
         g.watch(tensors['coord'])
         tf.random.set_seed(0)
-        en = bpnn(tensors, sf_spec, nn_spec)
+        en = bpnn(tensors)
         frc_jacob = - g.gradient(en, tensors['coord'])
 
     tensors = {
@@ -117,10 +116,11 @@ def test_jacob_bpnn():
         "cell":  tf.constant(water.cell[np.newaxis, :, :], tf.float32)
     }
 
+    bpnn = BPNN(sf_spec, nn_spec, use_jacobian=False)
     with tf.GradientTape() as g:
         g.watch(tensors['coord'])
         tf.random.set_seed(0)
-        en = bpnn(tensors, sf_spec, nn_spec, use_jacobian=False)
+        en = bpnn(tensors)
         frc_no_jacob = - g.gradient(en, tensors['coord'])
 
     assert np.allclose(frc_jacob, frc_no_jacob, rtol=5e-3)

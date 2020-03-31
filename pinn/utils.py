@@ -49,7 +49,7 @@ def pi_named(default_name='unnamed'):
     def decorator(func):
         @wraps(func)
         def named_layer(*args, name=default_name, **kwargs):
-            with tf.compat.v1.variable_scope(name):
+            with tf.name_scope(name):
                 return func(*args, **kwargs)
         return named_layer
     return decorator

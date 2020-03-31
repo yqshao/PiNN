@@ -56,12 +56,12 @@ def test_potential_model():
     test = lambda: dataset()['test'].repeat().apply(sparse_batch(100))
     params={
     'model_dir': tmp,
-    'network': 'pinet',
+    'network': 'PiNet',
     'network_params': {
         'ii_nodes':[8,8],
         'pi_nodes':[8,8],
         'pp_nodes':[8,8],
-        'en_nodes':[8,8],
+        'out_nodes':[8,8],
         'rc': 3.0,
         'atom_types':[1]},
     'model_params':{
@@ -87,7 +87,7 @@ def test_derivitives():
     import numpy as np
     params = {
     'model_dir': '/tmp/pinn_test/lj',
-    'network':'lj',
+    'network':'LJ',
     'network_params': {'rc':3},
     'model_params':{}}
     model = potential_model(params)
@@ -118,7 +118,7 @@ def test_clist_nl():
     """
     from ase.build import bulk
     from ase.neighborlist import neighbor_list
-    from pinn.layers import cell_list_nl
+    from pinn.layers import CellListNL
 
     to_test = [bulk('Cu'), bulk('Mg'), bulk('Fe')]
     ind, coord, cell = [],[],[]
@@ -131,7 +131,7 @@ def test_clist_nl():
         'ind_1': tf.constant(np.concatenate(ind, axis=0), tf.int32),
         'coord': tf.constant(np.concatenate(coord, axis=0), tf.float32),
         'cell': tf.constant(np.stack(cell, axis=0), tf.float32)}
-    nl = cell_list_nl(tensors, rc=10)
+    nl = CellListNL(rc=10)(tensors)
     dist_pinn = nl['dist'].numpy()
 
     dist_ase = []

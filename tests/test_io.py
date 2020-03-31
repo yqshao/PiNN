@@ -65,7 +65,6 @@ def test_write():
     import os
     from pinn.io import load_tfrecord, write_tfrecord, sparse_batch
     from shutil import rmtree
-    os.mkdir('tfr')
     tmp = tempfile.mkdtemp(prefix='pinn_test')
     ds = get_trivial_runner_ds().repeat(20)
     write_tfrecord('{}/test.yml'.format(tmp), ds)

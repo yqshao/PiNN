@@ -3,7 +3,6 @@
 Models transfer a network to a model function to use with the tf estimator api.
 A model defines the goal/loss of the model, as well as training paramters.
 """
-from pinn.networks import pinet
 import pinn.networks
 import tensorflow as tf
 import numpy as np

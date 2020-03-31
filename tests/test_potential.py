@@ -15,7 +15,7 @@ def test_pinn_potential():
         'ii_nodes': [8, 8],
         'pi_nodes': [8, 8],
         'pp_nodes': [8, 8],
-        'en_nodes': [8, 8],
+        'out_nodes': [8, 8],
         'depth': 3,
         'rc': 5.,
         'n_basis': 5,
@@ -23,7 +23,7 @@ def test_pinn_potential():
     }
     params = {
         'model_dir': testpath,
-        'network': 'pinet',
+        'network': 'PiNet',
         'network_params': network_params,
         'model_params': {'use_force': True,
                          'e_dress': {1: 0.5}, 'e_scale': 5.0, 'e_unit': 2.0}
@@ -50,7 +50,7 @@ def test_bpnn_potential():
 
     params = {
         'model_dir': testpath,
-        'network': 'bpnn',
+        'network': 'BPNN',
         'network_params': network_params,
         'model_params': {'use_force': True,
                          'e_dress': {1: 0.5}, 'e_scale': 5.0, 'e_unit': 2.0}
@@ -62,7 +62,7 @@ def test_bpnn_potential():
 
 @pytest.mark.forked
 def test_bpnn_potential_pre_cond():
-    from pinn.networks import bpnn
+    from pinn.networks import BPNN
 
     testpath = tempfile.mkdtemp()
     network_params = {
@@ -77,12 +77,10 @@ def test_bpnn_potential_pre_cond():
         'nn_spec': {1: [8, 8]},
         'rc': 5.
     }
-
-    def pre_fn(tensors): return bpnn(
-        tensors, preprocess=True, **network_params)
+    bpnn =  BPNN(**network_params)
 
     dataset = load_numpy(_get_lj_data(), split=1)\
-        .apply(sparse_batch(10)).map(pre_fn)
+        .apply(sparse_batch(10)).map(bpnn.preprocess)
 
     batches = [tensors for tensors in dataset]
     fp_range = []
@@ -95,7 +93,7 @@ def test_bpnn_potential_pre_cond():
     network_params['fp_range'] = fp_range
     params = {
         'model_dir': testpath,
-        'network': 'bpnn',
+        'network': 'BPNN',
         'network_params': network_params,
         'model_params': {'use_force': True,
                          'e_dress': {1: 0.5}, 'e_scale': 5.0, 'e_unit': 2.0}
@@ -182,6 +180,7 @@ def _potential_tests(params):
 
     de = e_pred[-1] - e_pred[0]
     int_f = np.trapz(f_pred[:, 0, 0], x=x_a_range)
+    print(f_pred)
     assert np.allclose(de, -int_f, rtol=5e-3)
 
     # Test virial pressure
