@@ -22,6 +22,7 @@ def _stress_indexer(files):
     locs = [match.span()[0] for match in
             re.finditer(b'STRESS TENSOR \[GPa\]', m)]
     indexes = list(zip([files['out']]*len(locs), locs))
+    f.close()
     return indexes
 
 def _stress_loader(index):
@@ -33,13 +34,16 @@ def _stress_loader(index):
     for i in range(3):
         l = f.readline().strip()
         data.append(l.split()[1:])
-    return {'s_data': np.array(data, np.float)}
+    unit = -1e9*2.2937e17*1e-30 # GPa -> Hartree/Ang^3
+    f.close()
+    return {'s_data': np.array(data, np.float)*unit}
 
 def _energy_indexer(files):
     import mmap
     f = open(files['out'], 'r')
     regex = r'ENERGY\|\ Total FORCE_EVAL.*:\s*([-+]?\d*\.?\d*)'
     energies = [float(e) for e in re.findall(regex, f.read())]
+    f.close()
     return energies
 
 def _energy_loader(energy):
@@ -52,9 +56,11 @@ def _force_indexer(files):
     locs = [match.span()[0] for match in
             re.finditer(b'ATOMIC FORCES in', m)]
     indexes = list(zip([files['out']]*len(locs), locs))
+    f.close()
     return indexes
 
 def _force_loader(index):
+    bohr2ang = 0.5291772109
     fname, loc = index
     f = open(fname, 'r')
     data = []
@@ -64,17 +70,19 @@ def _force_loader(index):
     while not l.startswith('SUM OF'):
         data.append(l.split()[3:])
         l = f.readline().strip()
-    return {'f_data': np.array(data, np.float)}
+    f.close()
+    return {'f_data': np.array(data, np.float)/bohr2ang}
 
 def _coord_indexer(files):
     import mmap
     f = open(files['coord'], 'r')
     first_line = f.readline(); f.seek(0);
-    regex = str.encode('(^|\n)'+first_line[:-1]+'(\r|\n)')
+    regex = str.encode('(^|\n)'+first_line[:-1]+'(\r\n|\n)')
     m = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-    locs = [match.span()[0] for match in
+    locs = [match.span()[-1] for match in
             re.finditer(regex, m)]
     indexes = list(zip([files['coord']]*len(locs), locs))
+    f.close()
     return indexes
 
 def _coord_loader(index):
@@ -83,13 +91,14 @@ def _coord_loader(index):
     coord = []
     f = open(fname, 'r')
     f.seek(loc)
-    [f.readline() for i in range(2)]
+    f.readline()
     while True:
         line = f.readline().split()
         if len(line) <= 1:
             break
         elems.append(atomic_numbers[line[0]])
         coord.append(line[1:4])
+    f.close()
     return {'elems': np.array(elems, np.float),
             'coord': np.array(coord, np.float)}
 
