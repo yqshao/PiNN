@@ -134,6 +134,7 @@ class PreprocessLayer(tf.keras.layers.Layer):
         self.nl_layer = CellListNL(rc)
 
     def call(self, tensors):
+        tensors = tensors.copy()
         for k in ['elems', 'dist']:
             if k in tensors.keys():
                 tensors[k] = tf.reshape(tensors[k], tf.shape(tensors[k])[:1])

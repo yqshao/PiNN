@@ -400,6 +400,7 @@ class PreprocessLayer(tf.keras.layers.Layer):
         self.symm_func = BPSymmFunc(sf_spec, rc, cutoff_type, use_jacobian)
 
     def call(self, tensors):
+        tenors = tensors.copy()
         for k in ['elems', 'dist']:
             if k in tensors.keys():
                 tensors[k] = tf.reshape(tensors[k], tf.shape(tensors[k])[:1])
