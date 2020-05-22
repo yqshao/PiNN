@@ -11,9 +11,6 @@ workflows:
       - pytest:
           requires:
             - build
-      - deploy-doc:
-          requires:
-            - build
 jobs:
   build:
     docker:
@@ -58,20 +55,3 @@ jobs:
             export CUDA_VISIBLE_DEVICES=''
             pytest --forked tests/ --cov=pinn
             codecov --token=$CODECOV_TOKEN
-  deploy-doc:
-    docker:
-      - image: circleci/python:3.6.10-stretch
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - venv-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-{{ checksum ".circleci/config.yml" }}
-      - run:
-          name: Deploy doc
-          command: |
-            sudo apt-get update
-            sudo apt-get install pandoc            
-            . venv/bin/activate
-            pip install -e .
-            ./.circleci/build_doc.sh
