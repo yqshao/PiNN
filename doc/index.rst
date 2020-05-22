@@ -5,6 +5,7 @@ Table of contents
    :maxdepth: 2
 
    introduction.rst
+   data.rst
    datasets.rst
    networks.rst
    models.rst
