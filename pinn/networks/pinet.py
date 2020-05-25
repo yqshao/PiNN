@@ -186,7 +186,7 @@ class PiNet(tf.keras.Model):
         self.out_layers = [OutLayer(out_nodes, out_units) for i in range(depth)]
         self.ann_output =  ANNOutput(out_pool)
 
-    def call(self, tensors):
+    def call(self, tensors, training=False):
         tensors = self.preprocess(tensors)
         basis = self.basis_fn(tensors['dist'])[:, None, :]
 

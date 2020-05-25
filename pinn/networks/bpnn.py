@@ -364,24 +364,30 @@ class BPFingerprint(tf.keras.layers.Layer):
 
 class BPFeedForward(tf.keras.layers.Layer):
     """Element specific feed-forward neural networks used in BPNN"""
-    def __init__(self, nn_spec, act, out_units):
+    def __init__(self, nn_spec, act, dropout, out_units, dropout_frac=0.2):
         super(BPFeedForward, self).__init__()
         self.ff_layers = {}
         self.out_units = out_units
         for k, v in nn_spec.items():
-            self.ff_layers[k] = [
-                tf.keras.layers.Dense(units, activation=act)
-                for units in v]
+            if not dropout:
+                self.ff_layers[k] = [
+                    tf.keras.layers.Dense(units, activation=act)
+                    for units in v]
+            else:
+                self.ff_layers[k] = sum([
+                    [tf.keras.layers.Dense(units, activation=act),
+                     tf.keras.layers.Dropout(dropout_frac)]
+                    for units in v], [])
             self.ff_layers[k].append(
                 tf.keras.layers.Dense(out_units, activation=None,
                                       use_bias=False))
 
-    def call(self, tensors):
+    def call(self, tensors, training=False):
         output = []
         indices = []
         for k, layers in self.ff_layers.items():
             tensor_elem = tensors['elem_fps'][k]
-            for layer in layers:
+            for i, layer in enumerate(layers):
                 tensor_elem = layer(tensor_elem)
             output.append(tensor_elem)
             indices.append(tf.where(tf.equal(tensors['elems'], k))[:,0])
@@ -442,6 +448,7 @@ class BPNN(tf.keras.Model):
         rc (float): cutoff radius.
         cutoff_type (string): cutoff function to use.
         act (str): activation function to use in dense layers.
+        dropout (bool): use dropout in the dense layers.
         fp_scale (bool): scale the fingerprints according to fp_range.
         fp_range (list of [min, max]): the atomic fingerprint range for each SF
             used to pre-condition the fingerprints.
@@ -454,19 +461,19 @@ class BPNN(tf.keras.Model):
         prediction or preprocessed tensor dictionary
     """
     def __init__(self, sf_spec, nn_spec,
-                 rc=5.0, act='tanh', cutoff_type='f1',
+                 rc=5.0, act='tanh', dropout=False, cutoff_type='f1',
                  fp_range=[], fp_scale=False,
                  preprocess=False, use_jacobian=True,
                  out_units=1, out_pool=False):
         super(BPNN, self).__init__()
         self.preprocess = PreprocessLayer(sf_spec, rc, cutoff_type, use_jacobian)
         self.fingerprint = BPFingerprint(sf_spec, nn_spec, fp_range, fp_scale, use_jacobian)
-        self.feed_forward = BPFeedForward(nn_spec, act, out_units)
+        self.feed_forward = BPFeedForward(nn_spec, act, dropout, out_units)
         self.ann_output = ANNOutput(out_pool)
 
-    def call(self, tensors):
+    def call(self, tensors, training=False):
         tensors = self.preprocess(tensors)
         tensors = self.fingerprint(tensors)
-        output = self.feed_forward(tensors)
+        output = self.feed_forward(tensors, training=training)
         output = self.ann_output([tensors['ind_1'], output])
         return output

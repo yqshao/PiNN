@@ -114,7 +114,8 @@ def _potential_model_fn(features, labels, mode, params):
     network = network_fn(**network_params)
     features = network.preprocess(features)
     connect_dist_grad(features)
-    pred = network(features)
+    pred = network(features,
+                   training=(mode==tf.estimator.ModeKeys.TRAIN))
 
     ind = features['ind_1']  # ind_1 => id of molecule for each atom
     nbatch = tf.reduce_max(ind)+1
