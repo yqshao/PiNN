@@ -70,8 +70,7 @@ class IPLayer(tf.keras.layers.Layer):
         super(IPLayer, self).__init__()
 
     def call(self, tensors):
-        ind_2, inter = tensors
-        n_atoms = tf.reduce_max(ind_2) + 1
+        ind_2, inter, n_atoms = tensors
         return tf.math.unsorted_segment_sum(inter, ind_2[:, 0], n_atoms)
 
 
@@ -105,10 +104,11 @@ class GCBlock(tf.keras.layers.Layer):
 
     def call(self, tensors):
         ind_2, prop, basis = tensors
+        n_atoms = tf.shape(prop)[0]
         prop = self.pp_layer(prop)
         inter = self.pi_layer([ind_2, prop, basis])
         inter = self.ii_layer(inter)
-        prop = self.ip_layer([ind_2, inter])
+        prop = self.ip_layer([ind_2, inter, n_atoms])
         return prop
 
 class ResUpdate(tf.keras.layers.Layer):
