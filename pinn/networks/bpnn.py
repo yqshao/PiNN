@@ -306,7 +306,7 @@ class BPSymmFunc(tf.keras.layers.Layer):
                 fp, jacob_ind = fn(tensors, **options)
                 fps['fp_{}'.format(i)] = fp
         tensors.update(fps)
-        tensors.pop('ind_3')
+        tensors.pop('ind_3', None)
         tensors.pop('dist')
         tensors.pop('fc')
         return tensors
