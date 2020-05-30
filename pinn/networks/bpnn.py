@@ -364,7 +364,7 @@ class BPFingerprint(tf.keras.layers.Layer):
 
 class BPFeedForward(tf.keras.layers.Layer):
     """Element specific feed-forward neural networks used in BPNN"""
-    def __init__(self, nn_spec, act, dropout, out_units, dropout_frac=0.2):
+    def __init__(self, nn_spec, act, dropout, dropout_rate, out_units):
         super(BPFeedForward, self).__init__()
         self.ff_layers = {}
         self.out_units = out_units
@@ -376,7 +376,7 @@ class BPFeedForward(tf.keras.layers.Layer):
             else:
                 self.ff_layers[k] = sum([
                     [tf.keras.layers.Dense(units, activation=act),
-                     tf.keras.layers.Dropout(dropout_frac)]
+                     tf.keras.layers.Dropout(dropout_rate)]
                     for units in v], [])
             self.ff_layers[k].append(
                 tf.keras.layers.Dense(out_units, activation=None,
@@ -449,6 +449,7 @@ class BPNN(tf.keras.Model):
         cutoff_type (string): cutoff function to use.
         act (str): activation function to use in dense layers.
         dropout (bool): use dropout in the dense layers.
+        dropout_rate (float): fraction of dropout during training.
         fp_scale (bool): scale the fingerprints according to fp_range.
         fp_range (list of [min, max]): the atomic fingerprint range for each SF
             used to pre-condition the fingerprints.
@@ -461,14 +462,15 @@ class BPNN(tf.keras.Model):
         prediction or preprocessed tensor dictionary
     """
     def __init__(self, sf_spec, nn_spec,
-                 rc=5.0, act='tanh', dropout=False, cutoff_type='f1',
-                 fp_range=[], fp_scale=False,
+                 rc=5.0,cutoff_type='f1',
+                 act='tanh', dropout=False, dropout_rate=0.2,
                  preprocess=False, use_jacobian=True,
+                 fp_range=[], fp_scale=False,
                  out_units=1, out_pool=False):
         super(BPNN, self).__init__()
         self.preprocess = PreprocessLayer(sf_spec, rc, cutoff_type, use_jacobian)
         self.fingerprint = BPFingerprint(sf_spec, nn_spec, fp_range, fp_scale, use_jacobian)
-        self.feed_forward = BPFeedForward(nn_spec, act, dropout, out_units)
+        self.feed_forward = BPFeedForward(nn_spec, act, dropout, dropout_rate, out_units)
         self.ann_output = ANNOutput(out_pool)
 
     def call(self, tensors, training=False):
