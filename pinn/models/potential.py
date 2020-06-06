@@ -8,6 +8,8 @@ import pinn.networks
 import tensorflow as tf
 import numpy as np
 
+from tensorflow.python.training import training_ops
+from tensorflow.python.ops.parallel_for.gradients import jacobian
 from pinn.layers import atomic_dress
 from pinn.utils import pi_named, connect_dist_grad
 
@@ -46,6 +48,8 @@ default_params = {
     's_loss_multiplier': 1.0,
     'l2_loss_multiplier': 1.0,
     # Optimizer related
+    'optimizer': "Adam",
+    'randomize_loss': False,
     'learning_rate': 3e-4,   # Learning rate
     'use_norm_clip': True,   # see tf.clip_by_global_norm
     'norm_clip': 0.01,       # see tf.clip_by_global_norm
@@ -127,7 +131,62 @@ def _potential_model_fn(features, labels, mode, params):
 
         loss, metrics = _get_loss(features, pred, model_params)
         _make_train_summary(metrics)
-        train_op = _get_train_op(loss,  model_params)
+
+        if model_params['optimizer'] != 'KalmanFilter':
+            train_op = _get_train_op(loss, model_params)
+        else:
+            if model_params['randomize_loss']:
+                use_e = tf.cast(tf.random.uniform([], maxval=2, dtype=tf.int32), tf.float32)
+                model_params['e_loss_multiplier'] *= use_e
+                model_params['f_loss_multiplier'] *= (1-use_e)
+                model_params['use_stress'] = False
+
+            if model_params['use_e_per_atom']:
+                error = metrics['e_error_per_atom']*model_params['e_loss_multiplier']
+            else:
+                error = metrics['e_error']*model_params['e_loss_multiplier']
+            error = tf.reshape(error, [-1])
+            if model_params['use_force']:
+                error = tf.concat([error,
+                                   tf.reshape(metrics['f_error'], [-1])*
+                                   model_params['f_loss_multiplier']], 0)
+            if model_params['use_stress']:
+                error = tf.concat([error,
+                                   tf.reshape(metrics['s_error'], [-1])*
+                                   model_params['s_loss_multiplier']], 0)
+            #
+            var_list = network.trainable_variables
+            jacob = jacobian(error, var_list)
+            learning_rate = model_params['learning_rate']
+            if model_params['use_decay']:
+                global_step = tf.compat.v1.train.get_global_step()
+                learning_rate = tf.compat.v1.train.exponential_decay(
+                    learning_rate, global_step,
+                    model_params['decay_step'], model_params['decay_rate'],
+                    staircase=True)
+            n = tf.reduce_sum(
+                [tf.reduce_prod(var.shape) for var in var_list])
+            P = tf.Variable(tf.eye(n)*100, trainable=False)
+            H = tf.concat([tf.reshape(j, [tf.shape(j)[0], -1]) for j in jacob], axis=1)
+            H = tf.transpose(H)
+            m = tf.shape(H)[1]
+            t = tf.cast(tf.compat.v1.train.get_global_step(), tf.float32)
+            A =  tf.linalg.inv(
+                tf.tensordot(tf.transpose(H), tf.tensordot(P, H, 1), 1) +
+                tf.random.normal([m, m], 0.0, tf.reduce_max([tf.exp(-t/3000.)*0.01, 1e-6]), tf.float32) + # random noise
+                tf.eye(tf.shape(H)[1])/model_params['learning_rate'])
+            K = tf.tensordot(P, tf.tensordot(H, A, 1), 1)
+            grads = tf.tensordot(K, error, 1)
+            lengths = [tf.reduce_prod(var.shape) for var in var_list]
+            idx = tf.cumsum([0]+lengths)
+            grads = [tf.reshape(grads[idx[i]:idx[i+1]], var.shape)
+                     for i,  var in enumerate(var_list)]
+            grads_and_vars = zip(grads, var_list)
+            ops = [P.assign_add(-tf.tensordot(K, tf.tensordot(tf.transpose(H), P, 1),1), read_value=False)]
+            ops += [var.assign_add(-grad, read_value=False) for grad, var in grads_and_vars]
+            ops += [global_step.assign_add(1, read_value=False)]
+            train_op = tf.group(ops)
+
         return tf.estimator.EstimatorSpec(
             mode, loss=loss, train_op=train_op)
 
