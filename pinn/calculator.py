@@ -8,7 +8,7 @@ from ase.calculators.calculator import Calculator
 
 class PiNN_calc(Calculator):
     def __init__(self, model=None, atoms=None, to_eV=1.0,
-                 properties=['energy', 'forces', 'stress']):
+                 properties=['energy', 'forces', 'stress', 'energies', 'pairwise']):
         """PiNN interface with ASE as a calculator
 
         Args:

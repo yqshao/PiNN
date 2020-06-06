@@ -110,16 +110,15 @@ def _potential_model_fn(features, labels, mode, params):
     network_params = params['network_params']
     model_params = default_params.copy()
     model_params.update(params['model_params'])
-
     network = network_fn(**network_params)
     features = network.preprocess(features)
     connect_dist_grad(features)
-    pred = network(features,
+    atomic_pred = network(features,
                    training=(mode==tf.estimator.ModeKeys.TRAIN))
 
     ind = features['ind_1']  # ind_1 => id of molecule for each atom
     nbatch = tf.reduce_max(ind)+1
-    pred = tf.math.unsorted_segment_sum(pred, ind[:, 0], nbatch)
+    pred = tf.math.unsorted_segment_sum(atomic_pred, ind[:, 0], nbatch)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         n_trainable = np.sum([np.prod(v.shape)
@@ -149,17 +148,23 @@ def _potential_model_fn(features, labels, mode, params):
 
         predictions = {
             'energy': pred,
+            'energies': tf.expand_dims(atomic_pred, 0),
             'forces': forces,
         }
 
         if 'cell' in features:
             stress = _get_dense_grad(pred, features['diff'])
+            pairwise = tf.expand_dims(tf.concat([
+                tf.cast(features['ind_2'],tf.float32),
+                features['diff'], stress], axis=1),0)
+            predictions['pairwise'] = pairwise
             stress = tf.reduce_sum(
                 tf.expand_dims(stress, 1) *
                 tf.expand_dims(features['diff'], 2),
                 axis=0, keepdims=True)
             stress /= tf.linalg.det(features['cell'])
             predictions['stress'] = stress
+
         return tf.estimator.EstimatorSpec(
             mode, predictions=predictions)
 
