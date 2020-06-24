@@ -38,6 +38,7 @@ default_params = {
     'use_force': False,      # include force in Loss function
     'max_force': False,      # if set to float, omit forces larger than it
     'use_f_weights': False,  # scales the loss according to f_weights
+    'autoscale_force': False,  # scale force error according to no. of atoms
     ## Stress
     'use_stress': False,      # include stress in Loss function
     ## L2
@@ -258,11 +259,11 @@ def _get_loss(features, pred, model_params):
     metrics['e_data'] = e_data
     metrics['e_pred'] = e_pred
     metrics['e_error'] = e_error
+    ind_1 = features['ind_1']
+    atom_count = tf.math.unsorted_segment_sum(
+        tf.ones_like(ind_1, tf.float32), ind_1, tf.shape(e_data)[0])
 
     if model_params['log_e_per_atom'] or model_params['use_e_per_atom']:
-        ind_1 = features['ind_1']
-        atom_count = tf.math.unsorted_segment_sum(
-            tf.ones_like(ind_1, tf.float32), ind_1, tf.shape(e_data)[0])
         e_pred_per_atom = e_pred/atom_count
         e_data_per_atom = e_data/atom_count
         e_error_per_atom = e_error/atom_count
@@ -300,6 +301,9 @@ def _get_loss(features, pred, model_params):
                                tf.zeros_like(f_error), f_error)
         # keep the per_component loss here
         f_loss = f_error**2 * model_params['f_loss_multiplier']
+        if model_params['autoscale_force']:
+            # Scale the force loss with no. atoms
+            f_loss = f_loss/tf.gather(atom_count, ind_1)
         metrics['f_loss'] = f_loss
         tot_loss += tf.reduce_mean(f_loss)
 
