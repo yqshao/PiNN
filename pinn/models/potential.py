@@ -44,6 +44,8 @@ default_params = {
     ## L2
     'use_l2': False,         # L2 regularization
     # Loss function multipliers
+    'e_error_threshold': False,
+    'f_error_threshold': False,
     'e_loss_multiplier': 1.0,
     'f_loss_multiplier': 1.0,
     's_loss_multiplier': 1.0,
@@ -284,6 +286,11 @@ def _get_loss(features, pred, model_params):
         e_error = tf.where(e_mask, tf.zeros_like(e_error), e_error)
     # keep the per_sample loss so that it can be consumed by tf.compat.v1.metrics.mean
     e_loss = e_error**2 * model_params['e_loss_multiplier']
+    if model_params['e_error_threshold']:
+        e_thres = float(model_params['e_error_threshold'])
+        e_loss = tf.where(tf.abs(e_error)<
+                          e_thres*tf.sqrt(tf.reduce_mean(e_error**2)),
+                          tf.zeros_like(e_loss), e_loss)
     metrics['e_loss'] = e_loss
     tot_loss = tf.reduce_mean(e_loss)
 
@@ -301,9 +308,17 @@ def _get_loss(features, pred, model_params):
                                tf.zeros_like(f_error), f_error)
         # keep the per_component loss here
         f_loss = f_error**2 * model_params['f_loss_multiplier']
+
+        if model_params['f_error_threshold']:
+            f_thres = float(model_params['f_error_threshold'])
+            f_loss = tf.where(tf.abs(f_error)<
+                              f_thres*tf.sqrt(tf.reduce_mean(f_error**2)),
+                              tf.zeros_like(f_loss), f_loss)
+
         if model_params['autoscale_force']:
             # Scale the force loss with no. atoms
             f_loss = f_loss/tf.gather(atom_count, ind_1)
+
         metrics['f_loss'] = f_loss
         tot_loss += tf.reduce_mean(f_loss)
 
