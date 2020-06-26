@@ -28,21 +28,25 @@ default_params = {
     'e_unit': 1.0,  # output unit of energy during prediction
     # Loss function options
     ## Energy
-    'max_energy': False,     # if set to float, omit energies larger than it
+    'max_energy': False,      # if set to float, omit energies larger than it
     'use_e_per_atom': False,  # use e_per_atom to calculate e_loss
     'use_e_per_sqrt': False,
     'log_e_per_atom': False,  # log e_per_atom and its distribution
-                             # ^- this is forcely done if use_e_per_atom
-    'use_e_weight': False,   # scales the loss according to e_weight
+                              # ^- this is forcely done if use_e_per_atom
+    'use_e_weight': False,    # scales the loss according to e_weight
     ## Force
-    'use_force': False,      # include force in Loss function
-    'max_force': False,      # if set to float, omit forces larger than it
-    'use_f_weights': False,  # scales the loss according to f_weights
-    'autoscale_force': False,  # scale force error according to no. of atoms
+    'use_force': False,       # include force in Loss function
+    'use_single_force': False,# use single force label for update
+                              # ^- this option simulations the behavior of RuNNer
+                              #    and it makes no sense for batch size > 1,
+                              #    this also disbales the use_stress option
+    'max_force': False,       # if set to float, omit forces larger than it
+    'use_f_weights': False,   # scales the loss according to f_weights
+    'autoscale_force': False, # scale force error according to no. of atoms
     ## Stress
     'use_stress': False,      # include stress in Loss function
     ## L2
-    'use_l2': False,         # L2 regularization
+    'use_l2': False,          # L2 regularization
     # Loss function multipliers
     'e_error_threshold': False,
     'f_error_threshold': False,
@@ -52,7 +56,6 @@ default_params = {
     'l2_loss_multiplier': 1.0,
     # Optimizer related
     'optimizer': "Adam",
-    'randomize_loss': False,
     'learning_rate': 3e-4,   # Learning rate
     'use_norm_clip': True,   # see tf.clip_by_global_norm
     'norm_clip': 0.01,       # see tf.clip_by_global_norm
@@ -132,17 +135,23 @@ def _potential_model_fn(features, labels, mode, params):
                               for v in tf.compat.v1.trainable_variables()])
         print("Total number of trainable variables: {}".format(n_trainable))
 
+        if model_params['use_single_force']:
+            # randomly use force or energy, and randomly pick one force to use
+            all_ind = tf.shape(ind)[0]
+            use_ind = tf.random.uniform([], maxval= all_ind, dtype=tf.int32)
+            use_ind = tf.one_hot(use_ind, all_ind)
+            use_en = tf.cast(
+                tf.random.uniform([], maxval= 2, dtype=tf.int32), tf.float32)
+            model_params['e_loss_multiplier'] *= use_en
+            model_params['f_loss_multiplier'] *= use_ind[:,None] * (1.0 - use_en)
+            model_params['use_stress'] = False
+
         loss, metrics = _get_loss(features, pred, model_params)
         _make_train_summary(metrics)
 
         if model_params['optimizer'] != 'KalmanFilter':
             train_op = _get_train_op(loss, model_params)
         else:
-            if model_params['randomize_loss']:
-                use_e = tf.cast(tf.random.uniform([], maxval=2, dtype=tf.int32), tf.float32)
-                model_params['e_loss_multiplier'] *= use_e
-                model_params['f_loss_multiplier'] *= (1-use_e)
-                model_params['use_stress'] = False
 
             if model_params['use_e_per_atom']:
                 error = metrics['e_error_per_atom']*model_params['e_loss_multiplier']
@@ -150,14 +159,13 @@ def _potential_model_fn(features, labels, mode, params):
                 error = metrics['e_error']*model_params['e_loss_multiplier']
             error = tf.reshape(error, [-1])
             if model_params['use_force']:
-                error = tf.concat([error,
-                                   tf.reshape(metrics['f_error'], [-1])*
-                                   model_params['f_loss_multiplier']], 0)
+                error = tf.concat(
+                    [error, tf.reshape(metrics['f_error']*
+                                       model_params['f_loss_multiplier'], [-1])], 0)
             if model_params['use_stress']:
-                error = tf.concat([error,
-                                   tf.reshape(metrics['s_error'], [-1])*
-                                   model_params['s_loss_multiplier']], 0)
-            #
+                error = tf.concat(
+                    [error, tf.reshape(metrics['s_error']*
+                                       model_params['s_loss_multiplier'], [-1])], 0)
             var_list = network.trainable_variables
             jacob = jacobian(error, var_list)
             learning_rate = model_params['learning_rate']
