@@ -36,10 +36,11 @@ default_params = {
     'use_e_weight': False,    # scales the loss according to e_weight
     ## Force
     'use_force': False,       # include force in Loss function
+    'use_separate_force': False, # separately update based on energy and force
+                                 # ^- this disbales the use_stress option
     'use_single_force': False,# use single force label for update
                               # ^- this option simulations the behavior of RuNNer
                               #    and it makes no sense for batch size > 1,
-                              #    this also disbales the use_stress option
     'max_force': False,       # if set to float, omit forces larger than it
     'use_f_weights': False,   # scales the loss according to f_weights
     'autoscale_force': False, # scale force error according to no. of atoms
@@ -135,16 +136,18 @@ def _potential_model_fn(features, labels, mode, params):
                               for v in tf.compat.v1.trainable_variables()])
         print("Total number of trainable variables: {}".format(n_trainable))
 
+        if model_params['use_separate_force']:
+            use_en = tf.cast(
+                tf.random.uniform([], maxval= 2, dtype=tf.int32), tf.float32)
+            model_params['e_loss_multiplier'] *= use_en
+            model_params['f_loss_multiplier'] *= 1.0 - use_en
+            model_params['use_stress'] = False
         if model_params['use_single_force']:
             # randomly use force or energy, and randomly pick one force to use
             all_ind = tf.shape(ind)[0]
             use_ind = tf.random.uniform([], maxval= all_ind, dtype=tf.int32)
             use_ind = tf.one_hot(use_ind, all_ind)
-            use_en = tf.cast(
-                tf.random.uniform([], maxval= 2, dtype=tf.int32), tf.float32)
-            model_params['e_loss_multiplier'] *= use_en
-            model_params['f_loss_multiplier'] *= use_ind[:,None] * (1.0 - use_en)
-            model_params['use_stress'] = False
+            model_params['f_loss_multiplier'] *= use_ind[:,None]
 
         loss, metrics = _get_loss(features, pred, model_params)
         _make_train_summary(metrics)
