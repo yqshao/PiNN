@@ -146,8 +146,7 @@ def _potential_model_fn(features, labels, mode, params):
             # randomly use force or energy, and randomly pick one force to use
             all_ind = tf.shape(ind)[0]
             use_ind = tf.random.uniform([], maxval= all_ind, dtype=tf.int32)
-            use_ind = tf.one_hot(use_ind, all_ind)
-            model_params['f_loss_multiplier'] *= use_ind[:,None]
+            features['f_loss_ind'] = use_ind
 
         loss, metrics = _get_loss(features, pred, model_params)
         _make_train_summary(metrics)
@@ -162,9 +161,10 @@ def _potential_model_fn(features, labels, mode, params):
                 error = metrics['e_error']*model_params['e_loss_multiplier']
             error = tf.reshape(error, [-1])
             if model_params['use_force']:
-                error = tf.concat(
-                    [error, tf.reshape(metrics['f_error']*
-                                       model_params['f_loss_multiplier'], [-1])], 0)
+                f_error = metrics['f_error'] * model_params['f_loss_multiplier']
+                if model_params['use_single_force']:
+                    f_error = f_error[features['f_loss_ind'],:]
+                error = tf.concat([error, tf.reshape(f_error, [-1])], 0)
             if model_params['use_stress']:
                 error = tf.concat(
                     [error, tf.reshape(metrics['s_error']*
@@ -329,6 +329,9 @@ def _get_loss(features, pred, model_params):
         if model_params['autoscale_force']:
             # Scale the force loss with no. atoms
             f_loss = f_loss/tf.gather(atom_count, ind_1)
+
+        if 'f_loss_ind' in features:
+            f_loss = f_loss[features['f_loss_ind'], :]
 
         metrics['f_loss'] = f_loss
         tot_loss += tf.reduce_mean(f_loss)
