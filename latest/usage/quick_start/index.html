@@ -794,20 +794,19 @@ pinn -h
 <li><code>[extra]</code>: extra requirements (Jupyter, pymatgen, etc) </li>
 </ul>
 <p><strong>using container</strong> </p>
-<p>PiNN provides three built docker images, which can be converted to 
-singularity images without much effort:</p>
+<p>PiNN provides two built docker images, which can be converted to singularity
+images without much effort:</p>
 <div class="highlight"><pre><span></span><code>singularity build pinn.sif docker://teoroo/pinn:latest-gpu
 ./pinn.sif -h
 </code></pre></div>
-<p>Two images are provided:</p>
 <ul>
 <li><code>:latest-cpu</code> is much smaller, it comes without GPU support</li>
 <li><code>:latest-gpu</code> is the version with GPU support</li>
 </ul>
-<p>Extra dependencies like <code>Jupyter</code> is included in the image, for a quick 
-development environment:
+<p>Extra dependencies like <code>Jupyter</code> are included in the image, for a quick 
+development environment:</p>
 <div class="highlight"><pre><span></span><code>singularity run pinn.sif jupyter notebook
-</code></pre></div></p>
+</code></pre></div>
 <h2 id="configuration">Configuration</h2>
 <p>In PiNN, a model consists two essential parts, the network and the model. The
 network specifies the neural network architecture used to product atomistic
