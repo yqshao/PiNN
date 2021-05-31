@@ -779,7 +779,7 @@ in PiNN 1.0 the parameter file will serve as a comprehensive input for PiNN
 models, the structure of the parameter file is changed, see the documentation
 for more information.</p>
 <p><strong>Extended Kalman filter</strong>:
-a experimental extended Kalman filter (EKF) optimizer is implemented. </p>
+an experimental extended Kalman filter (EKF) optimizer is implemented.</p>
 <p><strong><code>pinn.get_*</code></strong> functions are now available to create models, networks and
 calculators from parameters or files.</p>
 <h2 id="notes-for-developers">Notes for developers</h2>
@@ -793,7 +793,7 @@ calculators from parameters or files.</p>
 TF2 update, dataset may be inspected interactively with eager execution. And
 splitting of those datasets (e.g. <code>load_tfrecord</code>) becomes possible.</p>
 <p><strong>Networks</strong>: following the guideline of TF2, networks in PiNN 1.x are new Keras
-models and layers becomes Keras layers. This means the PiNN networks are be used
+models and layers becomes Keras layers. This means the PiNN networks can be used
 to perform some simple prediction tasks. Note that PiNN models are still
 implemented as TensorFlow estimators since they provide a better control over
 the training and prediction behavior. Like the design of PiNN 0.x, the models
@@ -811,7 +811,7 @@ example.</p>
 <li>For dataset loaders <code>load_*</code><ul>
 <li>the <code>split</code> argument is renamed to <code>splits</code></li>
 <li>splitting is disabled by default</li>
-<li>nested splits like <code>{'train':1, 'test':[1,2,3]}</code> is not supported anymore</li>
+<li>nested splits like <code>{'train':1, 'test':[1,2,3]}</code> is not supported any more</li>
 </ul>
 </li>
 <li><code>format_dict</code> is renamed as <code>ds_spec</code> to be consistent with

@@ -761,10 +761,10 @@
                 
                 
                 <h1 id="convert">convert</h1>
-<p>Convert datasets into PiNN formated TFrecord.</p>
-<p>This commands output the dataset files <code>{output}.yml</code> and <code>{output.tfr}</code>. Datset
-can be splitted by specifying the ratios in <code>-o</code>, e.g. <code>-o 'train:8,test:2'</code>.
-The input dataset will be handled by
+<p>Convert datasets into PiNN formatted TFrecord files.</p>
+<p>This command output the dataset files <code>{output}.yml</code> and <code>{output.tfr}</code>. Datsset
+can be split by specifying the ratios in <code>-o</code>, e.g. <code>-o 'train:8,test:2'</code>. The
+input dataset will be handled by
 <a href="../../datasets/#api-documentation"><code>pinn.io.load_ds</code></a>, with appropriate options.</p>
 <h2 id="usage">Usage</h2>
 <div class="highlight"><pre><span></span><code>pinn convert [options] filename
@@ -797,7 +797,7 @@ The input dataset will be handled by
 <tr>
 <td><code>--seed</code></td>
 <td><code>0</code></td>
-<td>random seed if shufffle is used</td>
+<td>random seed if shuffle is used</td>
 </tr>
 </tbody>
 </table>
