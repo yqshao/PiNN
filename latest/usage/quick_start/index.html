@@ -308,6 +308,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#using-the-model" class="md-nav__link">
+    Using the model
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -828,8 +835,11 @@ as such:
 <h2 id="using-the-cli">Using the CLI</h2>
 <p>PiNN provides a CLI for training and simple dataset operations:</p>
 <div class="highlight"><pre><span></span><code>pinn convert data.traj -o <span class="s1">&#39;trian:8,eval:2&#39;</span>
-pinn train -t train.yml -e eval.yml -b <span class="m">30</span> --train-steps <span class="m">100000</span> params.yml
+pinn train -d model -t train.yml -e eval.yml -b <span class="m">30</span> --train-steps <span class="m">100000</span> params.yml
 </code></pre></div>
+<p>The above command takes a trajectory file <code>data.traj</code>, and splits it into two
+datasets. Then it takes the parameters from <code>params.yml</code>, and trains a model
+in the <code>model</code> directory.</p>
 <h2 id="monitoring">Monitoring</h2>
 <p>PiNN uses TensorFlow as a backend for training, which means the training log can 
 be monitored in real time using Tensorboard:
@@ -838,6 +848,13 @@ be monitored in real time using Tensorboard:
 <p>Or with the log inspector of PiNN:
 <div class="highlight"><pre><span></span><code>pinn log model
 </code></pre></div></p>
+<h2 id="using-the-model">Using the model</h2>
+<p>The simplest use case for PiNN models is to use them as ASE calculators. A calculator
+can be initialized from the model directory.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pinn</span>
+<span class="n">calc</span> <span class="o">=</span> <span class="n">pinn</span><span class="o">.</span><span class="n">get_calc</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">)</span>
+<span class="n">calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span>
+</code></pre></div>
                 
               
               
