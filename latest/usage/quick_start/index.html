@@ -828,7 +828,7 @@ as such:
 <h2 id="using-the-cli">Using the CLI</h2>
 <p>PiNN provides a CLI for training and simple dataset operations:</p>
 <div class="highlight"><pre><span></span><code>pinn convert data.traj -o <span class="s1">&#39;trian:8,eval:2&#39;</span>
-pinn train --train-ds train.yml --eval-ds eval.yml --train-steps 1e6
+pinn train -t train.yml -e eval.yml -b <span class="m">30</span> --train-steps <span class="m">100000</span> params.yml
 </code></pre></div>
 <h2 id="monitoring">Monitoring</h2>
 <p>PiNN uses TensorFlow as a backend for training, which means the training log can 
