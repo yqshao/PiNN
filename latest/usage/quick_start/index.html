@@ -786,9 +786,9 @@
 pip install -e PiNN<span class="o">[</span>gpu<span class="o">]</span>
 pinn -h
 </code></pre></div>
-<p>Extra dependencies are avaiable:</p>
+<p>Extra dependencies can be specified:</p>
 <ul>
-<li><code>[gpu]</code> and <code>[cpu]</code>: cpu and gpu version of Tensorflow</li>
+<li><code>[gpu]</code> or <code>[cpu]</code>: cpu or gpu version of TensorFlow</li>
 <li><code>[dev]</code>: development requirements for testing</li>
 <li><code>[doc]</code>: documentation requirements</li>
 <li><code>[extra]</code>: extra requirements (Jupyter, pymatgen, etc) </li>
@@ -805,7 +805,7 @@ singularity images without much effort:</p>
 <li><code>:latest-gpu</code> is the version with GPU support</li>
 </ul>
 <p>Extra dependencies like <code>Jupyter</code> is included in the image, for a quick 
-development envrionment:
+development environment:
 <div class="highlight"><pre><span></span><code>singularity run pinn.sif jupyter notebook
 </code></pre></div></p>
 <h2 id="configuration">Configuration</h2>
@@ -813,7 +813,7 @@ development envrionment:
 network specifies the neural network architecture used to product atomistic
 predictions from the input (coordinates and elements information). While the
 model interprets the predictions as physical quantities.</p>
-<p>In PiNN, the parameters for a model is saved as a <code>yaml</code> formated parameter
+<p>In PiNN, the parameters for a model is saved as a <code>yaml</code> formatted parameter
 file. A minimal example of model parameter file looks like this:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">model_dir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">pinet_potential</span>
 <span class="nt">model</span><span class="p">:</span>

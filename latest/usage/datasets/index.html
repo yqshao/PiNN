@@ -790,9 +790,9 @@
 <p>In PiNN, the dataset is represented with the TensorFlow <a href="https://www.tensorflow.org/api_docs/python/tf/data/Dataset"><code>Dataset</code>
 class</a>. Several
 dataset loaders are implemented in PiNN to load data from common formats.
-Starting from v1.0, PiNN provides a canonical data loader <code>pinn.io.load_ds</code>
-that handels dataset with different formats, see below for the API documentation
-and available datasets.</p>
+Starting from v1.0, PiNN provides a canonical data loader <code>pinn.io.load_ds</code> that
+handles dataset with different formats, see below for the API documentation and
+available datasets.</p>
 <h2 id="tfrecord">TFRecord</h2>
 <p>The tfrecord format is a serialized format for efficient data reading in
 TensorFlow. PiNN can save datasets in the TFRecord dataset. When PiNN writes the
@@ -821,13 +821,13 @@ corresponding ratios. For example:</p>
 <span class="n">test</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]</span>
 </code></pre></div>
 <p>Here <code>train</code> and <code>test</code> will be <code>tf.data.Dataset</code> objects which to be consumed
-by our models. The loaders also aceepts a seed parameter for the split to be
+by our models. The loaders also accepts a seed parameter for the split to be
 reproducible, and the default seed is <code>0</code>.</p>
 <h2 id="batching-the-dataset">Batching the dataset</h2>
 <p>Most TensorFlow operations (caching, repeating, shuffling) can be
 directly applied to the dataset. However, to handle datasets with
 different numbers of atoms in each structure, which is often the case,
-we use a special <code>sparse_batch</code> operation to create minibatches of
+we use a special <code>sparse_batch</code> operation to create mini-batches of
 the data in a sparse form. For example:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">pinn.io</span> <span class="kn">import</span> <span class="n">sparse_batch</span>
 <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_ds</span><span class="p">(</span><span class="n">fileanme</span><span class="p">)</span>
@@ -835,11 +835,11 @@ the data in a sparse form. For example:</p>
 </code></pre></div>
 <h2 id="custom-format">Custom format</h2>
 <p>To be able to shuffle and split the dataset, PiNN require the dataset to be
-represented as a list of datums. In the simplest case, the dataset could be a
-list of structure files, each contains one structure and label (or a sample).
-PiNN provides a <code>list_loader</code> decorator which turns a function reading a
-single sample into a function that transform a list of samples into a dataset.
-For example:</p>
+represented as a list of data. In the simplest case, the dataset could be a list
+of structure files, each contains one structure and label (or a sample). PiNN
+provides a <code>list_loader</code> decorator which turns a function reading a single
+sample into a function that transform a list of samples into a dataset. For
+example:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">pinn.io</span> <span class="kn">import</span> <span class="n">list_loader</span>
 
 <span class="nd">@list_loader</span><span class="p">()</span>

@@ -418,8 +418,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#configurartion" class="md-nav__link">
-    Configurartion
+  <a href="#configuration" class="md-nav__link">
+    Configuration
   </a>
   
 </li>
@@ -775,7 +775,7 @@ as forces, stress tensors for dipole moments. <code>pinn.models</code> are creat
 defining these tasks in a <code>network</code>-agnostic way. </p>
 <p>Two models are implemented in PiNN at this point, their respective options can
 be found in the "Implemented models" section.</p>
-<h2 id="configurartion">Configurartion</h2>
+<h2 id="configuration">Configuration</h2>
 <p>Models implemented in PiNN used a serialized format for their parameters. The
 parameter file specifies the network architecture, hyperparameters and training
 algorithm. A typical parameter file include the following sections:</p>
@@ -798,8 +798,8 @@ algorithm. A typical parameter file include the following sections:</p>
 a PiNN model and network, respectively. A model can be initialized by a
 parameter file or a nested python dictionary.</p>
 <h2 id="training">Training</h2>
-<p>The model maybe created by calling the corresponding model function, and a parameter
-dictonary mirroring the parameter file:</p>
+<p>The model maybe created by calling the corresponding model function, and a
+parameter dictionary mirroring the parameter file:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">from</span> <span class="nn">pinn.models.potential</span> <span class="kn">import</span> <span class="n">potential_model</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;params.yml&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>

@@ -786,10 +786,10 @@ like a Keras model.</p>
 <p>Optionally, a network can output multi-dimensional or per-structure predictions.
 The output is controlled by two parameters of PiNN networks: <code>out_units</code> and
 <code>out_pool</code>.</p>
-<p>PiNN networks output a tensor with the shape <code>[n_atoms]</code> if and <code>[n_atoms,
-out_units]</code> elsewise. Four <code>out_pool</code> options are available: "sum", "max", "min"
-and "avg". Each outputs structure-wise predictions by reducing the atomic
-contributions with the corresponding method.</p>
+<p>PiNN networks output a tensor with the shape <code>[n_atoms]</code> if <code>out_units=1</code> and
+<code>[n_atoms, out_units]</code> otherwise. Four <code>out_pool</code> options are available: "sum",
+"max", "min" and "avg". Each outputs structure-wise predictions by reducing the
+atomic contributions with the corresponding method.</p>
 <h2 id="preprocessing">Preprocessing</h2>
 <p>Atomic neural networks often involves calculating the neighbor list of atomic
 with certain cutoff, and computing atomic fingerprints. Different networks has
