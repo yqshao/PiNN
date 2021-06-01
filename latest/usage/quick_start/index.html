@@ -842,7 +842,7 @@ in the <code>model</code> directory.</p>
 <h2 id="monitoring">Monitoring</h2>
 <p>PiNN uses TensorFlow as a backend for training, which means the training log can 
 be monitored in real time using Tensorboard:
-<div class="highlight"><pre><span></span><code>tensorboard --model-dir model --port <span class="m">6006</span>
+<div class="highlight"><pre><span></span><code>tensorboard --log-dir model --port <span class="m">6006</span>
 </code></pre></div></p>
 <p>Or with the log inspector of PiNN:
 <div class="highlight"><pre><span></span><code>pinn log model
