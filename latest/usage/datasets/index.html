@@ -910,7 +910,7 @@ example:</p>
 <li><code>load_runner</code> if it ends with '.data'</li>
 <li>try to load it with <code>load_ase</code></li>
 </ul>
-<p>If the <code>fmt</code> is specified, the loader with use a corresponsing dataset loader.</p>
+<p>If the <code>fmt</code> is specified, the loader will use a corresponsing dataset loader.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -956,7 +956,7 @@ example:</p>
 <span class="sd">    - `load_runner` if it ends with &#39;.data&#39;</span>
 <span class="sd">    - try to load it with `load_ase`</span>
 
-<span class="sd">    If the `fmt` is specified, the loader with use a corresponsing dataset loader.</span>
+<span class="sd">    If the `fmt` is specified, the loader will use a corresponsing dataset loader.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        dataset: dataset a file or input for a loader according to `fmt`</span>
@@ -965,7 +965,6 @@ example:</p>
 <span class="sd">        shuffle (bool): shuffle the dataset (only used when splitting)</span>
 <span class="sd">        seed (int): random seed for shuffling</span>
 <span class="sd">        **kwargs: extra arguments to loaders</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">loaders</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tfr&#39;</span><span class="p">:</span>    <span class="n">load_tfrecord</span><span class="p">,</span>
                <span class="s1">&#39;runner&#39;</span><span class="p">:</span> <span class="n">load_runner</span><span class="p">,</span>
