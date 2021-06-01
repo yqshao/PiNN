@@ -779,7 +779,7 @@ be found in the "Implemented models" section.</p>
 <p>Models implemented in PiNN used a serialized format for their parameters. The
 parameter file specifies the network architecture, hyperparameters and training
 algorithm. A typical parameter file include the following sections:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">model_dir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/tmp/test_pinet_pot</span>
+<div class="highlight"><pre><span></span><code><span class="nt">model_dir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">pinet_potential</span>
 <span class="nt">model</span><span class="p">:</span>
   <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">potential_model</span>
   <span class="nt">params</span><span class="p">:</span>
@@ -808,7 +808,7 @@ parameter dictionary mirroring the parameter file:</p>
 </code></pre></div>
 <p>PiNN provides a shortcut <code>pinn.get_model</code> to create an implemented model from a
 parameter dictionary or parameter file.</p>
-<div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">pinn</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s1">&#39;pinet.yml&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">pinn</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s1">&#39;params.yml&#39;</span><span class="p">)</span>
 </code></pre></div>
 <p><code>pinn.get_model</code> automatically saves a copy <code>params.yml</code> file in the model
 directory. When such a file exist, the model can be loaded with its directory as
