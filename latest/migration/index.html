@@ -790,8 +790,9 @@ calculators from parameters or files.</p>
 <li>The Docker Hub repo is now teoroo/pinn</li>
 </ul>
 <p><strong>Datasets</strong>: dataset loaders should be most compatible with PiNN 0.x. With the
-TF2 update, dataset may be inspected interactively with eager execution. And
-splitting of those datasets (e.g. <code>load_tfrecord</code>) becomes possible.</p>
+TF2 update, dataset may be inspected interactively with eager execution.
+Splitting option is simplified (see below), and splitting of <code>load_tfrecord</code>
+becomes possible.</p>
 <p><strong>Networks</strong>: following the guideline of TF2, networks in PiNN 1.x are new Keras
 models and layers becomes Keras layers. This means the PiNN networks can be used
 to perform some simple prediction tasks. Note that PiNN models are still
