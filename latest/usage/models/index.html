@@ -806,13 +806,13 @@ parameter dictionary mirroring the parameter file:</p>
     <span class="n">params</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">yaml</span><span class="o">.</span><span class="n">Loader</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">potential_model</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 </code></pre></div>
-<p>PiNN provides a shortcut <code>pinn.model</code> to create an implemented model from a
+<p>PiNN provides a shortcut <code>pinn.get_model</code> to create an implemented model from a
 parameter dictionary or parameter file.</p>
 <div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">pinn</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s1">&#39;pinet.yml&#39;</span><span class="p">)</span>
 </code></pre></div>
 <p><code>pinn.get_model</code> automatically saves a copy <code>params.yml</code> file in the model
-directory. When if such a file exist, the model can be loaded with its directory
-as well.</p>
+directory. When such a file exist, the model can be loaded with its directory as
+well.</p>
 <div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">pinn</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s1">&#39;pinet_potential&#39;</span><span class="p">)</span>
 </code></pre></div>
 <p>The PiNN model is a TensorFlow estimator, to train the model in a python script:</p>
