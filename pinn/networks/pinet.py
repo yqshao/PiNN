@@ -128,10 +128,11 @@ class ResUpdate(tf.keras.layers.Layer):
         return self.transform(old) + new
 
 class PreprocessLayer(tf.keras.layers.Layer):
-    def __init__(self, atom_types, rc):
+    def __init__(self, atom_types, rc, use_extra):
         super(PreprocessLayer, self).__init__()
         self.embed = AtomicOnehot(atom_types)
         self.nl_layer = CellListNL(rc)
+        self.use_extra = use_extra
 
     def call(self, tensors):
         tensors = tensors.copy()
@@ -142,6 +143,8 @@ class PreprocessLayer(tf.keras.layers.Layer):
             tensors.update(self.nl_layer(tensors))
             tensors['prop'] = tf.cast(
                 self.embed(tensors['elems']), tensors['coord'].dtype)
+            if self.use_extra:
+                tensors['prop'] = tf.concat([tensors['prop'], tensors['extra']], axis=1) 
         return tensors
 
 class PiNet(tf.keras.Model):
@@ -168,13 +171,13 @@ class PiNet(tf.keras.Model):
     def __init__(self, atom_types=[1, 6, 7, 8],  rc=4.0, cutoff_type='f1',
                  basis_type='polynomial', n_basis=4, gamma=3.0, center=None,
                  pp_nodes=[16, 16], pi_nodes=[16, 16], ii_nodes=[16, 16],
-                 out_nodes=[16, 16], out_units=1, out_pool=False,
+                 out_nodes=[16, 16], out_units=1, out_pool=False, use_extra=False,
                  act='tanh', depth=4):
 
         super(PiNet, self).__init__()
 
         self.depth = depth
-        self.preprocess = PreprocessLayer(atom_types, rc)
+        self.preprocess = PreprocessLayer(atom_types, rc, use_extra)
 
         if basis_type == 'polynomial':
             self.basis_fn = PolynomialBasis(cutoff_type, rc, n_basis)
