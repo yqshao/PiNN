@@ -168,10 +168,11 @@ class PiNet(tf.keras.Model):
                  basis_type='polynomial', n_basis=4, gamma=3.0, center=None,
                  pp_nodes=[16, 16], pi_nodes=[16, 16], ii_nodes=[16, 16],
                  out_nodes=[16, 16], out_units=1, out_pool=False,
-                 act='tanh', depth=4):
+                 act='tanh', depth=4, residue=True):
 
         super(PiNet, self).__init__()
 
+        self.residue = residue
         self.depth = depth
         self.preprocess = PreprocessLayer(atom_types, rc)
         self.cutoff = CutoffFunc(rc, cutoff_type)
@@ -181,11 +182,16 @@ class PiNet(tf.keras.Model):
         elif basis_type == 'gaussian':
             self.basis_fn = GaussianBasis(rc, center, gamma, rc, n_basis)
 
-        self.res_update = [ResUpdate() for i in range(depth)]
+        if self.residue:
+            self.res_update = [ResUpdate() for i in range(depth)]
+            self.out_layers = [OutLayer(out_nodes, out_units) for i in range(depth)]
+        else:
+            self.out_layer = OutLayer(out_nodes, out_units)
+
         self.gc_blocks = [GCBlock([], pi_nodes, ii_nodes, activation=act)]
         self.gc_blocks += [GCBlock(pp_nodes, pi_nodes, ii_nodes, activation=act)
                            for i in range(depth-1)]
-        self.out_layers = [OutLayer(out_nodes, out_units) for i in range(depth)]
+
         self.ann_output =  ANNOutput(out_pool)
 
     def call(self, tensors):
@@ -195,8 +201,13 @@ class PiNet(tf.keras.Model):
         output = 0.0
         for i in range(self.depth):
             prop = self.gc_blocks[i]([tensors['ind_2'], tensors['prop'], basis])
-            output = self.out_layers[i]([tensors['ind_1'], prop, output])
-            tensors['prop'] = self.res_update[i]([tensors['prop'], prop])
+            if self.residue:
+                tensors['prop'] = self.res_update[i]([tensors['prop'], prop])
+                output = self.out_layers[i]([tensors['ind_1'], prop, output])
+            else:
+                tensors['prop'] = prop
+        if not self.residue:
+            output = self.out_layer([tensors['ind_1'], prop, output])
 
         output = self.ann_output([tensors['ind_1'], output])
         return output
