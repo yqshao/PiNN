@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - ddrb
     tags:
       - v*
 jobs:
