@@ -19,7 +19,9 @@ def test_pinn_potential():
         'depth': 3,
         'rc': 5.,
         'n_basis': 5,
-        'atom_types': [1]
+        'atom_types': [1],
+        'ddrb': True,
+        'basis_type': 'gaussian'
     }
     params = {
         'model_dir': testpath,

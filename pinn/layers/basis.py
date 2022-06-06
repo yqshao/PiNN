@@ -56,14 +56,13 @@ class GaussianBasis(tf.keras.layers.Layer):
             self.center = np.array(center)
         self.gamma = np.broadcast_to(gamma, self.center.shape)
 
-    def call(self, dist, fc=None):
-        basis = tf.stack(
-            [
-                tf.exp(-gamma * (dist - center) ** 2)
-                for (center, gamma) in zip(self.center, self.gamma)
-            ],
-            axis=1,
-        )
+    def call(self, dist, fc=None, rho=None):
+        center = self.center[None,:]
+        gamma = self.gamma[None,:]
+        if rho is not None:
+            center = center/(rho[:,None]**(1./3.))
+            gamma = gamma*(rho[:,None]**(2./3.))
+        basis = tf.exp(-gamma * (dist[:,None] - center) ** 2)
         if fc is not None:
             basis = tf.einsum("pb,p->pb", basis, fc)  # p-> pair; b-> basis
         return basis
@@ -89,7 +88,8 @@ class PolynomialBasis(tf.keras.layers.Layer):
             n_basis = [(i + 1) for i in range(n_basis)]
         self.n_basis = n_basis
 
-    def call(self, dist, fc=None):
+    def call(self, dist, fc=None, rho=None):
         assert fc is not None, "Polynomail basis requires a cutoff function."
+        assert rho is None, "DDRB not implemented for polynomial basis."
         basis = tf.stack([fc**i for i in self.n_basis], axis=1)
         return basis

@@ -4,7 +4,7 @@ import warnings
 import tensorflow as tf
 from pinn.utils import pi_named, connect_dist_grad
 from pinn.layers.bpsf import G2_SF, G3_SF, G4_SF
-from pinn.layers import CellListNL, CutoffFunc, ANNOutput
+from pinn.layers import CellListNL, CutoffFunc, ANNOutput, DensityEstimate
 
 
 @tf.custom_gradient
@@ -39,9 +39,9 @@ def _form_triplet(tensors):
 
 class BPSymmFunc(tf.keras.layers.Layer):
     """ Wrapper for building Behler-style symmetry functions"""
-    def __init__(self, sf_spec, rc, cutoff_type, use_jacobian=True):
+    def __init__(self, sf_spec, rc, cutoff_type, ddrb, ddrb_ref, use_jacobian):
         super(BPSymmFunc, self).__init__()
-        bpsf_layers = {'G2': G2_SF, 'G3': G3_SF, 'G4': G4_SF}
+        bpsf_layers = {"G2": G2_SF, "G3": G3_SF, "G4": G4_SF}
         # specifications
         self.bpsfs = []
         self.triplet = False
@@ -57,9 +57,20 @@ class BPSymmFunc(tf.keras.layers.Layer):
             self.bpsfs.append(layer(**args))
         self.use_jacobian = use_jacobian
 
+        self.ddrb = ddrb
+        if self.ddrb:
+            self.density = DensityEstimate(rc, cutoff_type, ddrb_ref)
+
     def _compute_fps(self, tensors, gtape=None):
         fc = self.fc_layer(tensors['dist'])
         fps = {}
+
+        if self.ddrb:
+            fps['rho'] = self.density(tensors['ind_2'], fc, pairwise=False)
+            rho = tf.gather(fps['rho'], tensors['ind_2'][:,0])
+        else:
+            rho = None
+
         for i, layer in enumerate(self.bpsfs):
             if isinstance(layer, G2_SF):
                 fp, jacob_ind = layer(
@@ -67,6 +78,7 @@ class BPSymmFunc(tf.keras.layers.Layer):
                     dist=tensors["dist"],
                     elems=tensors["elems"],
                     fc=fc,
+                    rho=rho
                 )
             else:
                 fp, jacob_ind = layer(
@@ -76,6 +88,7 @@ class BPSymmFunc(tf.keras.layers.Layer):
                     diff=tensors["diff"],
                     elems=tensors["elems"],
                     fc=fc,
+                    rho=rho
                 )
             fps[f'fp_{i}'] = fp
 
@@ -125,6 +138,8 @@ class BPFingerprint(tf.keras.layers.Layer):
         sf_spec, nn_spec, fp_range, fp_scale, use_jacobian = self.sf_spec, self.nn_spec, self.fp_range, self.fp_scale, self.use_jacobian
         fps = {e: [] for e in nn_spec.keys()}
         fps['ALL'] = []
+        if 'rho' in tensors.keys():
+            fps['ALL'].append(tensors.pop('rho')[:,None])
         n_pairs = tf.shape(tensors['diff'])[0]
         for i, sf in enumerate(sf_spec):
             fp = tensors['fp_{}'.format(i)]
@@ -184,10 +199,10 @@ class BPFeedForward(tf.keras.layers.Layer):
         return output
 
 class PreprocessLayer(tf.keras.layers.Layer):
-    def __init__(self, sf_spec, rc, cutoff_type, use_jacobian):
+    def __init__(self, sf_spec, rc, cutoff_type, ddrb, ddrb_ref, use_jacobian):
         super(PreprocessLayer, self).__init__()
         self.nl_layer = CellListNL(rc)
-        self.symm_func = BPSymmFunc(sf_spec, rc, cutoff_type, use_jacobian)
+        self.symm_func = BPSymmFunc(sf_spec, rc, cutoff_type, ddrb, ddrb_ref, use_jacobian)
 
     def call(self, tensors):
         tenors = tensors.copy()
@@ -201,7 +216,7 @@ class PreprocessLayer(tf.keras.layers.Layer):
 
 
 class BPNN(tf.keras.Model):
-    """ Network function for Behler-Parrinello Neural Network
+    """Network function for Behler-Parrinello Neural Network
 
     Example of sf_spec::
 
@@ -243,13 +258,25 @@ class BPNN(tf.keras.Model):
     Returns:
         prediction or preprocessed tensor dictionary
     """
-    def __init__(self, sf_spec, nn_spec,
-                 rc=5.0, act='tanh', cutoff_type='f1',
-                 fp_range=[], fp_scale=False,
-                 preprocess=False, use_jacobian=True,
-                 out_units=1, out_pool=False):
+
+    def __init__(
+        self,
+        sf_spec,
+        nn_spec,
+        rc=5.0,
+        act="tanh",
+        cutoff_type="f1",
+        fp_range=[],
+        fp_scale=False,
+        preprocess=False,
+        use_jacobian=True,
+        out_units=1,
+        out_pool=False,
+        ddrb=False,
+        ddrb_ref=0.1,
+    ):
         super(BPNN, self).__init__()
-        self.preprocess = PreprocessLayer(sf_spec, rc, cutoff_type, use_jacobian)
+        self.preprocess = PreprocessLayer(sf_spec, rc, cutoff_type, ddrb, ddrb_ref, use_jacobian)
         self.fingerprint = BPFingerprint(sf_spec, nn_spec, fp_range, fp_scale, use_jacobian)
         self.feed_forward = BPFeedForward(nn_spec, act, out_units)
         self.ann_output = ANNOutput(out_pool)
@@ -258,5 +285,5 @@ class BPNN(tf.keras.Model):
         tensors = self.preprocess(tensors)
         tensors = self.fingerprint(tensors)
         output = self.feed_forward(tensors)
-        output = self.ann_output([tensors['ind_1'], output])
+        output = self.ann_output([tensors["ind_1"], output])
         return output

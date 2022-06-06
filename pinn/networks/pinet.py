@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
 from pinn.utils import pi_named, connect_dist_grad
-from pinn.layers import CellListNL, CutoffFunc, \
+from pinn.layers import CellListNL, CutoffFunc, DensityEstimate, \
     PolynomialBasis, GaussianBasis, AtomicOnehot, ANNOutput
 
 class FFLayer(tf.keras.layers.Layer):
@@ -164,11 +164,28 @@ class PiNet(tf.keras.Model):
         act (string): activation function to use.
         preprocess (bool): whether to return the preprocessed tensor.
     """
-    def __init__(self, atom_types=[1, 6, 7, 8],  rc=4.0, cutoff_type='f1',
-                 basis_type='polynomial', n_basis=4, gamma=3.0, center=None,
-                 pp_nodes=[16, 16], pi_nodes=[16, 16], ii_nodes=[16, 16],
-                 out_nodes=[16, 16], out_units=1, out_pool=False,
-                 act='tanh', depth=4, residue=True):
+
+    def __init__(
+        self,
+        atom_types=[1, 6, 7, 8],
+        rc=4.0,
+        cutoff_type="f1",
+        basis_type="polynomial",
+        n_basis=4,
+        gamma=3.0,
+        center=None,
+        pp_nodes=[16, 16],
+        pi_nodes=[16, 16],
+        ii_nodes=[16, 16],
+        out_nodes=[16, 16],
+        out_units=1,
+        out_pool=False,
+        act="tanh",
+        depth=4,
+        residue=True,
+        ddrb=False,
+        ddrb_ref = 0.1
+    ):
 
         super(PiNet, self).__init__()
 
@@ -177,10 +194,15 @@ class PiNet(tf.keras.Model):
         self.preprocess = PreprocessLayer(atom_types, rc)
         self.cutoff = CutoffFunc(rc, cutoff_type)
 
-        if basis_type == 'polynomial':
+        # denstiy estimation layer
+        self.ddrb = ddrb
+        if self.ddrb:
+            self.density = DensityEstimate(rc, cutoff_type, ddrb_ref)
+
+        if basis_type == "polynomial":
             self.basis_fn = PolynomialBasis(n_basis)
-        elif basis_type == 'gaussian':
-            self.basis_fn = GaussianBasis(rc, center, gamma, rc, n_basis)
+        elif basis_type == "gaussian":
+            self.basis_fn = GaussianBasis(center, gamma, rc, n_basis)
 
         if self.residue:
             self.res_update = [ResUpdate() for i in range(depth)]
@@ -189,25 +211,35 @@ class PiNet(tf.keras.Model):
             self.out_layer = OutLayer(out_nodes, out_units)
 
         self.gc_blocks = [GCBlock([], pi_nodes, ii_nodes, activation=act)]
-        self.gc_blocks += [GCBlock(pp_nodes, pi_nodes, ii_nodes, activation=act)
-                           for i in range(depth-1)]
+        self.gc_blocks += [
+            GCBlock(pp_nodes, pi_nodes, ii_nodes, activation=act)
+            for i in range(depth - 1)
+        ]
 
-        self.ann_output =  ANNOutput(out_pool)
+        self.ann_output = ANNOutput(out_pool)
 
     def call(self, tensors):
         tensors = self.preprocess(tensors)
-        fc = self.cutoff(tensors['dist'])
-        basis = self.basis_fn(tensors['dist'], fc=fc)
+        fc = self.cutoff(tensors["dist"])
+
+        if self.ddrb:
+            rho = self.density(tensors["ind_2"], fc, pairwise=False)
+            tensors["prop"] = tf.concat([tensors["prop"], rho[:, None]], axis=1)
+            rho = tf.gather(rho, tensors["ind_2"][:, 0])
+        else:
+            rho = None
+        basis = self.basis_fn(tensors["dist"], fc=fc, rho=rho)
+
         output = 0.0
         for i in range(self.depth):
-            prop = self.gc_blocks[i]([tensors['ind_2'], tensors['prop'], basis])
+            prop = self.gc_blocks[i]([tensors["ind_2"], tensors["prop"], basis])
             if self.residue:
-                tensors['prop'] = self.res_update[i]([tensors['prop'], prop])
-                output = self.out_layers[i]([tensors['ind_1'], prop, output])
+                tensors["prop"] = self.res_update[i]([tensors["prop"], prop])
+                output = self.out_layers[i]([tensors["ind_1"], prop, output])
             else:
-                tensors['prop'] = prop
+                tensors["prop"] = prop
         if not self.residue:
-            output = self.out_layer([tensors['ind_1'], prop, output])
+            output = self.out_layer([tensors["ind_1"], prop, output])
 
-        output = self.ann_output([tensors['ind_1'], output])
+        output = self.ann_output([tensors["ind_1"], output])
         return output

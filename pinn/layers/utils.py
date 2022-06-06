@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import numpy as np
 import tensorflow as tf
 
 class AtomicOnehot(tf.keras.layers.Layer):
@@ -39,3 +40,35 @@ class ANNOutput(tf.keras.layers.Layer):
         output = tf.squeeze(output, axis=1)
 
         return output
+
+
+class DensityEstimate(tf.keras.layers.Layer):
+    """Density Estimate Layer"""
+
+    def __init__(self, rc, cutoff_type, ddrb_ref):
+        super(DensityEstimate, self).__init__()
+        r = np.linspace(0, rc, 100)
+        if cutoff_type == "f1":
+            fac = np.trapz((0.5 * np.cos(np.pi * r / rc) + 1) * (4 * np.pi * r**2), r)
+        elif cutoff_type == "f2":
+            fac = np.trapz(
+                (np.tanh(1 - r / rc) / np.tanh(1)) ** 3 * (4 * np.pi * r**2), r
+            )
+        else:
+            raise NotImplementedError(f"Unknown Cutoff {cutoff_type}")
+        self.cnt_ref = ddrb_ref * fac
+
+    def call(self, ind_2, fc, pairwise=False):
+        """
+        Args:
+           ind_2: [N_pair, 2] indices of each pair
+           fc: [N_pair] cutoff function evaluated on each pair
+        Returns:
+           density estimation
+        """
+        cnt = tf.scatter_nd(ind_2[:, :1], fc[:], [tf.reduce_max(ind_2[:, 0]) + 1]) + 1
+        rho = cnt / self.cnt_ref
+        if pairwise:
+            return tf.gather(rho, ind_2[:, 0])
+        else:
+            return rho

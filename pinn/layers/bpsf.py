@@ -80,7 +80,7 @@ class G2_SF(tf.keras.layers.Layer):
         self.i = i
         self.j = j
 
-    def call(self, ind_2, dist, elems, fc):
+    def call(self, ind_2, dist, elems, fc, rho=None):
         """
         Args:
             ind_2: (N_pair x 2) indices for each pair
@@ -114,7 +114,10 @@ class G2_SF(tf.keras.layers.Layer):
         else:
             p_ind = tf.cumsum(tf.ones_like(i_rind))-1
 
-        sf = self.basis(dist, fc)
+        if rho is not None:
+            rho = tf.gather(rho, p_ind)
+
+        sf = self.basis(dist, fc, rho)
         fp = sf2fp(i_rind, a_rind, sf)
         jacob_ind = tf.stack([p_ind, i_rind], axis=1)
         return fp, jacob_ind
@@ -143,7 +146,7 @@ class G3_SF(tf.keras.layers.Layer):
         self.j = j
         self.k = k
 
-    def call(self, ind_2, ind_3, dist, diff, elems, fc):
+    def call(self, ind_2, ind_3, dist, diff, elems, fc, rho=None):
         """
 
         Args:
@@ -153,6 +156,7 @@ class G3_SF(tf.keras.layers.Layer):
             diff: (N_pair) array of bond vectors
             elems: (N_atom) elements for each atom
             fc: (N_pair) cutoff functio  n
+            rho: (N_pair) density estimation for ddrb
 
         Returns:
             fp: a (n_atom x n_fingerprint) tensor of fingerprints
@@ -188,14 +192,16 @@ class G3_SF(tf.keras.layers.Layer):
         dist_ik = tf.gather(dist, ind_ik)
         fc_ij = tf.gather(fc, ind_ij)
         fc_ik = tf.gather(fc, ind_ik)
+        if rho is not None:
+            rho = tf.gather(rho, ind_ij)
 
         cos_ijk = tf.einsum("id,id->i", diff_ij, diff_ik) / dist_ij / dist_ik
         sf = (
             2 ** (1 - self.zeta[None,:])
             * (1 + self.lambd[None,:] * cos_ijk[:,None]) ** self.zeta[None,:]
-            * self.basis(dist_ij, fc_ij)
-            * self.basis(dist_ik, fc_ik)
-            * self.basis(dist_jk, fc_jk)
+            * self.basis(dist_ij, fc_ij, rho=rho)
+            * self.basis(dist_ik, fc_ik, rho=rho)
+            * self.basis(dist_jk, fc_jk, rho=rho)
         )
 
         fp = sf2fp(i_rind, a_rind, sf)
@@ -224,7 +230,7 @@ class G4_SF(tf.keras.layers.Layer):
         self.j = j
         self.k = k
 
-    def call(self, ind_2, ind_3, dist, diff, elems, fc):
+    def call(self, ind_2, ind_3, dist, diff, elems, fc, rho=None):
         """
 
         Args:
@@ -233,7 +239,8 @@ class G4_SF(tf.keras.layers.Layer):
             dist: (N_pair) array of distance
             diff: (N_pair) array of bond vectors
             elems: (N_atom) elements for each atom
-            fc: (N_pair) cutoff functio  n
+            fc: (N_pair) cutoff function
+            rho: (N_pair) density estimation for ddrb
 
         Returns:
             fp: a (n_atom x n_fingerprint) tensor of fingerprints
@@ -255,13 +262,15 @@ class G4_SF(tf.keras.layers.Layer):
         dist_ik = tf.gather(dist, ind_ik)
         fc_ij = tf.gather(fc, ind_ij)
         fc_ik = tf.gather(fc, ind_ik)
+        if rho is not None:
+            rho = tf.gather(rho, ind_ij)
 
         cos_ijk = tf.einsum("id,id->i", diff_ij, diff_ik) / dist_ij / dist_ik
         sf = (
             2 ** (1 - self.zeta[None,:])
             * (1 + self.lambd[None,:] * cos_ijk[:,None]) ** self.zeta[None,:]
-            * self.basis(dist_ij, fc_ij)
-            * self.basis(dist_ik, fc_ik)
+            * self.basis(dist_ij, fc_ij, rho=rho)
+            * self.basis(dist_ik, fc_ik, rho=rho)
         )
 
         fp = sf2fp(i_rind, a_rind, sf)
