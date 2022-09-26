@@ -82,6 +82,9 @@ def potential_model(features, labels, mode, params):
         forces = -_get_dense_grad(pred, features['coord'])
         forces = tf.expand_dims(forces, 0)
         predictions = {'energy': pred, 'forces': forces}
+        if 'elem_fps' in features:
+            jacobian = {k: _get_dense_grad(pred, v) for k,v in features['elem_fps']}
+            predcitions['jacobian']=jacobian
         if 'cell' in features:
             stress = _get_stress(pred, features)
             predictions['stress'] = stress
