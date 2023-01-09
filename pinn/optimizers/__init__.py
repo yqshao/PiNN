@@ -1,6 +1,7 @@
 import tensorflow as tf
 from pinn.optimizers.ekf import EKF, default_ekf
 from pinn.optimizers.gekf import gEKF
+from pinn.optimizers.gleopt import GLEOPT
 
 default_adam = {
     'class_name': 'Adam',
@@ -14,11 +15,14 @@ default_adam = {
         'clipnorm': 0.01}}
 
 def get(optimizer):
-    if isinstance(optimizer, EKF) or isinstance(optimizer, gEKF):
+    if isinstance(optimizer, EKF) or isinstance(optimizer, gEKF) \
+       or isinstance(optimizer, GLEOPT):
         return optimizer
     if isinstance(optimizer, dict):
         if optimizer['class_name']=='EKF':
             return EKF(**optimizer['config'])
         if optimizer['class_name']=='gEKF':
             return gEKF(**optimizer['config'])
+        if optimizer['class_name']=='GLEOPT':
+            return GLEOPT(**optimizer['config'])
     return tf.keras.optimizers.get(optimizer)
