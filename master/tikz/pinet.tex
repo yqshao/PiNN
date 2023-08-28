@@ -1,0 +1,93 @@
+\documentclass[tikz,convert=pdf2svg]{standalone}
+
+\definecolor{mcdb}{HTML}{004488}
+\definecolor{mcdr}{HTML}{994455}
+\definecolor{mcdy}{HTML}{997700}
+\definecolor{mclb}{HTML}{6699CC}
+\definecolor{mclr}{HTML}{EE99AA}
+\definecolor{mcly}{HTML}{EECC66}
+
+\usetikzlibrary{shapes,arrows,positioning}
+\usepackage[fira]{fontsetup}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=mcdr,
+  filecolor=mcdr,
+  urlcolor=mcdr,
+}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=.5cm,
+  hide/.style={text=gray,draw=gray},
+  ops/.style={fill=white,>=stealth,thick},
+  var/.style={rectangle,draw,thick,fill=white,minimum width=.5cm, minimum height=.5cm},
+  link/.style={thick, ->},
+  layer/.style={circle, draw,thick,fill=mclr,minimum size=.5cm,inner sep=0},
+  mlp/.pic={\draw[thick] (-135:0.25) ..controls (0,-.2) and (0,.2)..(45:0.25);},
+  pi/.pic={
+    \draw[thick] (-.25,0)--(0,0)
+    (0,0)..controls  (60:.15) .. ( 45:.25)
+    (0,0)..controls (-60:.15) .. (-45:.25);
+    \draw[thick,fill=white] (0,0) circle (.05cm);},
+  ip/.pic={
+    \draw[thick] (-.25,0)--(.25,0)
+    (0,0)..controls ( 120:.15) .. ( 135:.25)
+    (0,0)..controls (-120:.15) .. (-135:.25);
+    \draw[thick,fill=white] (0,0) circle (.05cm);},
+  ]
+
+  % block lines
+  \draw[densely dotted] (0,3.5)--(0,-2) (4,3.5)--(4,-2) (10,3.5)--(10,-2);
+  \draw[hide,densely dotted] (2,3.5)--(2,-1) (6,3.5)--(6,-1) ( 8,3.5)--( 8,-1);
+
+  % block/layer annotations
+  \draw[<->,ops] (0,-1.5)--++(4,0);
+  \draw[<->,ops] (4,-1.5)--++(6,0);
+  \node[ops] at (1,-0.5) {\href{./pi-layer.html}{PI layer}};
+  \node[ops] at (3,-0.5) {\href{./ii-layer.html}{II layer}};
+  \node[ops] at (5,-0.5) {\href{./ip-layer.html}{IP layer}};
+  \node[ops] at (7,-0.5) {\href{./ip-layer.html}{ResUpdate}};
+  \node[ops] at (9,-0.5) {\href{./ip-layer.html}{PP layer}};
+  \node[ops] at (9, 2.5) {\href{./ip-layer.html}{Out layer}};
+  \node[ops] at (2,-1.5) {\textbf{PI operation}};
+  \node[ops] at (7,-1.5) {\textbf{IP operation}};
+
+  % Graph representation
+  \node[var] at (0,0.5)  (v0) {$\mathbb{P}^{t}_{i}$};
+  \node[var,hide] at (2,2.5)  (v1) {$\mathbb{I}_{ij}$};
+  \node[var] at (4,2.5)  (v2) {$\mathbb{I}^{t}_{ij}$};
+  \node[var,hide] at (6,1.5)  (v3) {$\mathbb{P}_{i}$};
+  \node[var,hide] at (8,0.5)  (v4) {$\mathbb{P}_{i}$};
+  \node[var] at (10,0.5) (v5) {$\mathbb{P}^{t+1}_{i}$};
+  \node[var] at (10,1.5) (v6) {$\mathbb{P}^{\mathrm{out}}_{i}$};
+
+  \draw (1,1.5) node[layer] (l0) {} pic {pi};
+  \draw (3,2.5) node[layer] (l1) {} pic {mlp};
+  \draw (5,1.5) node[layer] (l2) {} pic {ip};
+  \draw (7,0.5) node[layer] (l3) {$+$};
+  \draw (9,0.5) node[layer] (l4) {} pic {mlp} ;
+  \draw (9,1.5) node[layer] (l5) {} pic {mlp} ;
+  \draw[link] (v0)--(l0);
+  \draw[link] (v1)--(l1);
+  \draw[link] (v2)--(l2);
+  \draw[link] (v3)--(l3);
+  \draw[link] (v0)--(l3);
+  \draw[link] (v4)--(l4);
+  \draw[link] (v4)--(l5);
+  \draw[link] (l0)--(v1);
+  \draw[link] (l1)--(v2);
+  \draw[link] (l2)--(v3);
+  \draw[link] (l3)--(v4);
+  \draw[link] (l4)--(v5);
+  \draw[link] (l5)--(v6);
+
+\end{tikzpicture}
+\end{document}
+
+%%% Local Variables:
+%%% coding: utf-8
+%%% mode: latex
+%%% TeX-engine: xetex
+%%% End:
