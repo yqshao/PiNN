@@ -2,6 +2,10 @@
   display: none;
 }
 
+.doc .highlight code {
+  color: var(--theme-color);
+}
+
 .jp-InputPrompt,
 .jp-OutputPrompt {
   display: none !important;
