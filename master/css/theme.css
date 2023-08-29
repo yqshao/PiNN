@@ -660,6 +660,7 @@ table:not(.highlighttable) td:last-of-type{
 
 p {
     overflow-x: auto;
+    overflow-y: hidden;
     scrollbar-width: thin;
 }
 

@@ -926,7 +926,7 @@ input interaction, i.e.:</p>
 
     <div class="doc doc-contents ">
 
-      <p>IPLayer does not require any parameter, initialize as <code>IPLayer()</code></p>
+      <p>IPLayer does not require any parameter, initialize as <code>IPLayer()</code>.</p>
 
     </div>
 
@@ -1023,8 +1023,8 @@ the new tensor, i.e.:</p>
 \begin{aligned}
 \mathbb{X}'_{\ldots{}l} &amp;= \mathrm{ResUpdate}(\mathbb{X}^{\mathrm{old}}_{\ldots{}k},\mathbb{X}^{\mathrm{new}}_{\ldots{}l}) &amp; \\
   &amp;= \begin{cases}
-       \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \textrm{, if} k = l \\
-       \sum_{k} W_{kl} \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \textrm{, if} k \ne l \\
+       \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \textrm{, if } k = l \\
+       \sum_{k} W_{kl} \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \textrm{, if } k \ne l \\
      \end{cases}
 \end{aligned}
 \]</div>
@@ -1058,7 +1058,7 @@ the new tensor, i.e.:</p>
 
     <div class="doc doc-contents ">
 
-      <p>ResUpdate does not require any parameter, initialize as <code>ResUpdate()</code></p>
+      <p>ResUpdate does not require any parameter, initialize as <code>ResUpdate()</code>.</p>
 
     </div>
 
@@ -1430,7 +1430,7 @@ scales the outputs.</p>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        IPLayer does not require any parameter, initialize as `IPLayer()`</span>
+<span class="sd">        IPLayer does not require any parameter, initialize as `IPLayer()`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">IPLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
@@ -1532,8 +1532,8 @@ scales the outputs.</p>
 <span class="sd">    \\begin{aligned}</span>
 <span class="sd">    \mathbb{X}&#39;_{\ldots{}l} &amp;= \mathrm{ResUpdate}(\mathbb{X}^{\mathrm{old}}_{\ldots{}k},\mathbb{X}^{\mathrm{new}}_{\ldots{}l}) &amp; \\\\</span>
 <span class="sd">      &amp;= \\begin{cases}</span>
-<span class="sd">           \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \\textrm{, if} k = l \\\\</span>
-<span class="sd">           \sum_{k} W_{kl} \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \\textrm{, if} k \\ne l \\\\</span>
+<span class="sd">           \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \\textrm{, if } k = l \\\\</span>
+<span class="sd">           \sum_{k} W_{kl} \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \\textrm{, if } k \\ne l \\\\</span>
 <span class="sd">         \end{cases}</span>
 <span class="sd">    \end{aligned}</span>
 <span class="sd">    $$</span>
@@ -1544,7 +1544,7 @@ scales the outputs.</p>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ResUpdate does not require any parameter, initialize as `ResUpdate()`</span>
+<span class="sd">        ResUpdate does not require any parameter, initialize as `ResUpdate()`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ResUpdate</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
