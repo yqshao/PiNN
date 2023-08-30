@@ -1590,7 +1590,7 @@ See below for an example definition for the <code>PILayer</code></p>
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h2 id="using-pinn-networks">Using PiNN Networks<a class="anchor-link" href="#using-pinn-networks">&#182;</a></h2><p><code>network</code> (Keras Models) are defined similarly, but they can be directly used to perform regression task.</p>
 <p>By default, <code>network</code>  produces per-atom predictions, this can be changed by the <code>out_pool</code> parameter to 
-get some simple predictions. In that case, the network object can be used to perform trainig directly.</p>
+get some simple per-structure predictions. In that case, the network object can be used to perform trainig directly.</p>
 
 </div>
 </div>
@@ -1724,7 +1724,7 @@ Epoch 3/3
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h2 id="further-benchmarks">Further benchmarks<a class="anchor-link" href="#further-benchmarks">&#182;</a></h2><p>For more advanced usage you are recommended to use the <code>Model</code> API to define the trainig loss, derived predicates.
 For traininig potential energy surfaces, you are recommended to use <code>pinn.models.potential_model</code> in combination with the command line interface (CLI).</p>
-<p>Alternatively, see the <a href="./More_on_training.ipynb">Trainig Tips</a> notebook to see how to run the tranining interactively in a notebook.</p>
+<p>Alternatively, see the <a href="../More_on_training.ipynb">Trainig Tips</a> notebook to see how to run the tranining interactively in a notebook.</p>
 
 </div>
 </div>
