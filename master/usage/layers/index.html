@@ -342,173 +342,7 @@
     <div id="content">
       <h1 id="shared-layers">Shared Layers</h1>
 <p>This page documents the common layers in different networks.</p>
-<h2 id="embedding">Embedding</h2>
-<h3 id="atomiconehot">AtomicOneHot</h3>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-
-  <div class="doc doc-contents first">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
-
-  
-      <p>One-hot embedding layer</p>
-<p>Given the atomic number of each atom (<span class="arithmatex">\(Z_{i}\)</span>) and a list of specified
-element types (<span class="arithmatex">\(Z_{c}\)</span>), returns:</p>
-<div class="arithmatex">\[\mathbb{P}_{ic} = \delta_{Z_{i},Z_{c}}\]</div>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-
-
-<h4 id="pinn.layers.misc.AtomicOnehot.__init__" class="doc doc-heading">
-          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">atom_types</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span></code>
-
-</h4>
-
-
-  <div class="doc doc-contents ">
-  
-
-
-
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>atom_types</code></td>
-          <td>
-                <code>list of int</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>list of elements</p>
-            </div>
-          </td>
-          <td>
-                <code>[1, 6, 7, 8, 9]</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-
-<h4 id="pinn.layers.misc.AtomicOnehot.call" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span></code>
-
-</h4>
-
-
-  <div class="doc doc-contents ">
-  
-
-
-
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>elems</code></td>
-          <td>
-                <code>tensor</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>atomic indices of atoms, with shape <code>(n_atoms)</code></p>
-            </div>
-          </td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-
-
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>prop</code></td>
-          <td>
-                <code>tensor</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>atomic property tensor, with shape <code>(n_atoms, n_elems)</code></p>
-            </div>
-          </td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
-
-</div>
-
-
-
-  </div>
-
-  </div>
-
-</div><h2 id="neighbor-list">Neighbor list</h2>
+<h2 id="neighbor-list">Neighbor list</h2>
 <h3 id="celllistnl">CellListNL</h3>
 
 
@@ -604,15 +438,15 @@ element types (<span class="arithmatex">\(Z_{c}\)</span>), returns:</p>
       <p>The layer expects a dictionary of tensors from a sparse_batch
 with keys:</p>
 <ul>
-<li>"ind_1": sparse indices of atoms in batch, with shape <code>(n_atoms, 2)</code></li>
-<li>"coord": atomic coordinate, with shape <code>(n_atoms, 3)</code></li>
-<li>"cell" (optional): cell vectors with shape<code>(n_batch,3,3)</code></li>
+<li><code>ind_1</code>: sparse indices of atoms in batch, with shape <code>(n_atoms, 1)</code></li>
+<li><code>coord</code>: atomic coordinate, with shape <code>(n_atoms, 3)</code></li>
+<li><code>cell</code> (optional): cell vectors with shape<code>(n_batch,3,3)</code></li>
 </ul>
 <p>It output a dictionary</p>
 <ul>
-<li>"ind_2": sparse indices of neighbor list, with shape <code>(n_pairs, 2)</code></li>
-<li>"diff": displacement vectors, with shape <code>(n_pairs, 3)</code></li>
-<li>"dist": pairwise distances, with shape <code>(n_pairs)</code></li>
+<li><code>ind_2</code>: sparse indices of neighbor list, with shape <code>(n_pairs, 2)</code></li>
+<li><code>diff</code>: displacement vectors, with shape <code>(n_pairs, 3)</code></li>
+<li><code>dist</code>: pairwise distances, with shape <code>(n_pairs)</code></li>
 </ul>
 
 
@@ -635,7 +469,7 @@ with keys:</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>input tensors, {"ind_1", "coord", "cell"}</p>
+              <p>input tensors, with keys: <code>{"ind_1", "coord", "cell"}</code></p>
             </div>
           </td>
           <td>
@@ -662,7 +496,7 @@ with keys:</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>output tensors, {"ind_2", "diff", "dist"}</p>
+              <p>output tensors, with keys: {"ind_2", "diff", "dist"}`</p>
             </div>
           </td>
         </tr>
@@ -1227,6 +1061,282 @@ linearly spaced set of basis, otherwise <code>n_basis</code> will be the size of
           <td>
             <div class="doc-md-description">
               <p>basis functions with shape (n_pairs, n_basis)</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div><h2 id="misc">Misc</h2>
+<h3 id="atomiconehot">AtomicOneHot</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
+
+  
+      <p>One-hot embedding layer</p>
+<p>Given the atomic number of each atom (<span class="arithmatex">\(Z_{i}\)</span>) and a list of specified
+element types (<span class="arithmatex">\(Z_{c}\)</span>), returns:</p>
+<div class="arithmatex">\[\mathbb{P}_{ic} = \delta_{Z_{i},Z_{c}}\]</div>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="pinn.layers.misc.AtomicOnehot.__init__" class="doc doc-heading">
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">atom_types</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>atom_types</code></td>
+          <td>
+                <code>list of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>list of elements</p>
+            </div>
+          </td>
+          <td>
+                <code>[1, 6, 7, 8, 9]</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="pinn.layers.misc.AtomicOnehot.call" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>elems</code></td>
+          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>atomic indices of atoms, with shape <code>(n_atoms)</code></p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>prop</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>atomic property tensor, with shape <code>(n_atoms, n_elems)</code></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div><h3 id="annoutput">ANNOutput</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
+
+  
+      <p>ANN Ouput layer</p>
+<p>Output atomic or molecular (system) properties depending on <code>out_pool</code></p>
+<div class="arithmatex">\[
+\begin{cases}
+ \mathbb{P}^{\mathrm{out}}_i  &amp;, \textrm{if out_pool is False}\\
+ \mathrm{pool}_i(\mathbb{P}^{\mathrm{out}}_i)  &amp;, \textrm{if out_pool}
+\end{cases}
+\]</div>
+<p>, where <span class="arithmatex">\(\mathrm{pool}\)</span> is a reducing operation specified with <code>out_pool</code>,
+it can be one of 'sum', 'max', 'min', 'avg'.</p>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="pinn.layers.misc.ANNOutput.call" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>tensors</code></td>
+          <td>
+                <code>list of tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>ind_1 and output tensors</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>output</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>atomic or per-structure predictions</p>
             </div>
           </td>
         </tr>

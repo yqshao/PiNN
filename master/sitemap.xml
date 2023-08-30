@@ -21,6 +21,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://teoroo-cmc.github.io/pinn/master/notebooks/Layer_debug/</loc>
+         <lastmod>2023-08-30</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://teoroo-cmc.github.io/pinn/master/notebooks/Learn_LJ_potential/</loc>
          <lastmod>2023-08-30</lastmod>
          <changefreq>daily</changefreq>

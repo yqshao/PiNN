@@ -499,6 +499,20 @@ available for the PiNet network are detailed below.</p>
           </td>
         </tr>
         <tr>
+          <td><code>out_pool</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>pool atomic outputs, see ANNOutput</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
           <td><code>depth</code></td>
           <td>
                 <code>int</code>
@@ -634,7 +648,7 @@ available for the PiNet network are detailed below.</p>
       <p>PiNet takes batches atomic data as input, the following keys are
 required in the input dictionary of tensors:</p>
 <ul>
-<li><code>ind_1</code>: sparse indices for the batched data, with shape <code>(n_atoms, 2)</code>;</li>
+<li><code>ind_1</code>: sparse indices for the batched data, with shape <code>(n_atoms, 1)</code>;</li>
 <li><code>elems</code>: element (atomic numbers) for each atom, with shape <code>(n_atoms)</code>;</li>
 <li><code>coord</code>: coordintaes for each atom, with shape <code>(n_atoms, 3)</code>.</li>
 </ul>
@@ -923,7 +937,7 @@ functions, i.e.:</p>
 <div class="arithmatex">\[
 \begin{aligned}
 \mathbb{I}^{w}_{ij(bd)} &amp;= \mathrm{FFLayer}(\mathbb{P}_{ic}\Vert\mathbb{P}_{jc}) \\
-\mathbb{I}_{ijd} &amp;= \sum_b \mathbb{I}^{w}_{ij(bd)} \cdot e_{ijb}
+\mathbb{I}_{ijd} &amp;= \sum_b \mathbb{I}^{w}_{ij(bd)} \, e_{ijb}
 \end{aligned}
 \]</div>
 <p>, where <span class="arithmatex">\(\mathbb{I}^{w}_{ij(bd)}\)</span> is an intemediate weigh tensor for the
@@ -1262,10 +1276,10 @@ to the new after a learnable linear transformation that matches its shape to
 the new tensor, i.e.:</p>
 <div class="arithmatex">\[
 \begin{aligned}
-\mathbb{X}'_{\ldots{}l} &amp;= \mathrm{ResUpdate}(\mathbb{X}^{\mathrm{old}}_{\ldots{}c},\mathbb{X}^{\mathrm{new}}_{\ldots{}d}) &amp; \\
+\mathbb{X}'_{\ldots{}d} &amp;= \mathrm{ResUpdate}(\mathbb{X}^{\mathrm{old}}_{\ldots{}c},\mathbb{X}^{\mathrm{new}}_{\ldots{}d}) &amp; \\
   &amp;= \begin{cases}
-       \mathbb{X}^{\mathrm{old}}_{\ldots{}c} + \mathbb{X}^{\mathrm{new}}_{\ldots{}d} &amp; \textrm{, if } c = d \\
-       \sum_{c} W_{cd} \mathbb{X}^{\mathrm{old}}_{\ldots{}c} + \mathbb{X}^{\mathrm{new}}_{\ldots{}d} &amp; \textrm{, if } c \ne d \\
+       \mathbb{X}^{\mathrm{old}}_{\ldots{}d} + \mathbb{X}^{\mathrm{new}}_{\ldots{}d} &amp; \textrm{, if dimension matches} \\
+       \sum_{c} W_{cd} \, \mathbb{X}^{\mathrm{old}}_{\ldots{}c} + \mathbb{X}^{\mathrm{new}}_{\ldots{}d} &amp; \textrm{, elsewise}
      \end{cases}
 \end{aligned}
 \]</div>
@@ -1507,7 +1521,7 @@ linear biasless layer that scales the outputs, specified by <code>out_units</cod
   
       <p>OutLayer takes a list of three tensors as input:</p>
 <ul>
-<li>ind_1: sparse indices of atoms with shape <code>(n_atoms, 2)</code></li>
+<li>ind_1: sparse indices of atoms with shape <code>(n_atoms, 1)</code></li>
 <li>prop: property tensor with shape <code>(n_atoms, n_prop)</code></li>
 <li>prev_output:  previous output with shape <code>(n_atoms, out_units)</code></li>
 </ul>
