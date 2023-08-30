@@ -203,6 +203,14 @@
 
   
     
+    <li >
+      <a href="../layers/" class="">
+        Layers
+      </a>
+    </li>
+
+  
+    
     <li class="active">
       <a href="./" class="">
         PiNet
@@ -340,32 +348,47 @@ environment. One distinctive feature of PiNet is that the convolution operation
 is realized with pairwise functions whose form are determined by the pair,
 called pairwise interactions.</p>
 <h2 id="network-architecture">Network architecture</h2>
-<p>The overall architecture of PiNet is illustrated with the graph convolution block below:</p>
-<p><img alt="PiNet architecture" src="../../tikz/pinet.svg" width="500" /></p>
+<p>The overall architecture of PiNet is illustrated with the illustration below:</p>
+<p><img alt="PiNet architecture" src="../../tikz/pinet.svg" width="750" /></p>
+<p>The preprocess part of the network are implemented with shared layers (see
+<a href="../layers/">Layers</a>). The graph-convolution (GC) block are further divided
+into PI and IP operations, each consists several layers. Those operations are
+recursively applied to update the latent variables, and the output is updated
+after each iteration (<code>OutLayer</code>).</p>
 <p>We classify the latent variables into the atom-centered "properties"
 (<span class="arithmatex">\(\mathbb{P}\)</span>) and the pair-wise "interactions" (<span class="arithmatex">\(\mathbb{I}\)</span>) in our notation.
-Since the layers that transform <span class="arithmatex">\(\mathbb{P}\to\mathbb{P}\)</span> or
-<span class="arithmatex">\(\mathbb{I}\to\mathbb{I}\)</span> are usually standard feed-forward neural networks (FF
-layers), the more important part of PiNet are the PI and IP layers, which
-transform between those two types of variables.</p>
-<p>The operations are generally grouped into the PI and IP operations that
-constitutes a GC block, which can be further composed of individual layers, as
-shown above. Each of the layers is sub-classed from <code>tf.keras.layers.Layer</code>. The
-<code>PiNet</code> class provides a few parameters to control those layers. Check the layer
-specification below for more detailed description of the layers.</p>
+Since the layers that transform <span class="arithmatex">\(\mathbb{P}\)</span> to <span class="arithmatex">\(\mathbb{P}\)</span> or <span class="arithmatex">\(\mathbb{I}\)</span> to
+<span class="arithmatex">\(\mathbb{I}\)</span> are usually standard feed-forward neural networks (<code>FFLayer</code>), the
+special part of PiNet are <code>PILayer</code> and <code>IPLayers</code>, which transform between
+those two types of variables.</p>
+<p>We use the subscripts to denote the dimensionality of each variable, following
+the convention:</p>
+<ul>
+<li><span class="arithmatex">\(b\)</span>: basis function index;</li>
+<li><span class="arithmatex">\(c,d,e\)</span>: feature channels;</li>
+<li><span class="arithmatex">\(i,j,k\)</span>: atom indices;</li>
+<li><span class="arithmatex">\(x,y,z\)</span>: Cartesian coordinate indices.</li>
+</ul>
+<p>The equations that explain each of the above layers and the hyperparameters
+available for the PiNet network are detailed below.</p>
 <h2 id="network-specification">Network specification</h2>
 <h3 id="pinetpinet">pinet.PiNet</h3>
 
 
-  <div class="doc doc-object doc-class">
-
-
-    <div class="doc doc-contents first">
-
-      <p>tf.keras.Model for the PiNet network</p>
+<div class="doc doc-object doc-class">
 
 
 
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.Model">Model</span></code></p>
+
+  
+      <p>This class implements the Keras Model for the PiNet network.</p>
+
+
+  
 
   <div class="doc doc-children">
 
@@ -377,137 +400,237 @@ specification below for more detailed description of the layers.</p>
 
 
 
-  <div class="doc doc-object doc-method">
+
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.PiNet.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom_types</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">rc</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">cutoff_type</span><span class="o">=</span><span class="s1">&#39;f1&#39;</span><span class="p">,</span> <span class="n">basis_type</span><span class="o">=</span><span class="s1">&#39;polynomial&#39;</span><span class="p">,</span> <span class="n">n_basis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pp_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">pi_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">ii_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">out_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">out_units</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_pool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">act</span><span class="o">=</span><span class="s1">&#39;tanh&#39;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">atom_types</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">rc</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">cutoff_type</span><span class="o">=</span><span class="s1">&#39;f1&#39;</span><span class="p">,</span> <span class="n">basis_type</span><span class="o">=</span><span class="s1">&#39;polynomial&#39;</span><span class="p">,</span> <span class="n">n_basis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pp_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">pi_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">ii_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">out_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="n">out_units</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_pool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">act</span><span class="o">=</span><span class="s1">&#39;tanh&#39;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
+
+  <div class="doc doc-contents ">
+  
 
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>atom_types</code></td>
-        <td><code>list</code></td>
-        <td><p>elements for the one-hot embedding</p></td>
-        <td><code>[1, 6, 7, 8]</code></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-      <tr>
-        <td><code>pp_nodes</code></td>
-        <td><code>list</code></td>
-        <td><p>number of nodes for PPLayer</p></td>
-        <td><code>[16, 16]</code></td>
-      </tr>
-      <tr>
-        <td><code>pi_nodes</code></td>
-        <td><code>list</code></td>
-        <td><p>number of nodes for PILayer</p></td>
-        <td><code>[16, 16]</code></td>
-      </tr>
-      <tr>
-        <td><code>ii_nodes</code></td>
-        <td><code>list</code></td>
-        <td><p>number of nodes for IILayer</p></td>
-        <td><code>[16, 16]</code></td>
-      </tr>
-      <tr>
-        <td><code>out_nodes</code></td>
-        <td><code>list</code></td>
-        <td><p>number of nodes for OutLayer</p></td>
-        <td><code>[16, 16]</code></td>
-      </tr>
-      <tr>
-        <td><code>depth</code></td>
-        <td><code>int</code></td>
-        <td><p>number of interaction blocks</p></td>
-        <td><code>4</code></td>
-      </tr>
-      <tr>
-        <td><code>rc</code></td>
-        <td><code>float</code></td>
-        <td><p>cutoff radius</p></td>
-        <td><code>4.0</code></td>
-      </tr>
-      <tr>
-        <td><code>basis_type</code></td>
-        <td><code>string</code></td>
-        <td><p>basis function, can be "polynomial" or "gaussian"</p></td>
-        <td><code>&#39;polynomial&#39;</code></td>
-      </tr>
-      <tr>
-        <td><code>n_basis</code></td>
-        <td><code>int</code></td>
-        <td><p>number of basis functions to use</p></td>
-        <td><code>4</code></td>
-      </tr>
-      <tr>
-        <td><code>gamma</code></td>
-        <td><code>float or array</code></td>
-        <td><p>width of gaussian function for gaussian basis</p></td>
-        <td><code>3.0</code></td>
-      </tr>
-      <tr>
-        <td><code>center</code></td>
-        <td><code>float or array</code></td>
-        <td><p>center of gaussian function for gaussian basis</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>cutoff_type</code></td>
-        <td><code>string</code></td>
-        <td><p>cutoff function to use with the basis.</p></td>
-        <td><code>&#39;f1&#39;</code></td>
-      </tr>
-      <tr>
-        <td><code>act</code></td>
-        <td><code>string</code></td>
-        <td><p>activation function to use</p></td>
-        <td><code>&#39;tanh&#39;</code></td>
-      </tr>
-      <tr>
-        <td><code>preprocess</code></td>
-        <td><code>bool</code></td>
-        <td><p>whether to return the preprocessed tensor</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>atom_types</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>elements for the one-hot embedding</p>
+            </div>
+          </td>
+          <td>
+                <code>[1, 6, 7, 8]</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>pp_nodes</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>number of nodes for PPLayer</p>
+            </div>
+          </td>
+          <td>
+                <code>[16, 16]</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>pi_nodes</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>number of nodes for PILayer</p>
+            </div>
+          </td>
+          <td>
+                <code>[16, 16]</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>ii_nodes</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>number of nodes for IILayer</p>
+            </div>
+          </td>
+          <td>
+                <code>[16, 16]</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>out_nodes</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>number of nodes for OutLayer</p>
+            </div>
+          </td>
+          <td>
+                <code>[16, 16]</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>depth</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>number of interaction blocks</p>
+            </div>
+          </td>
+          <td>
+                <code>4</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>rc</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>cutoff radius</p>
+            </div>
+          </td>
+          <td>
+                <code>4.0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>basis_type</code></td>
+          <td>
+                <code>string</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>basis function, can be "polynomial" or "gaussian"</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;polynomial&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>n_basis</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>number of basis functions to use</p>
+            </div>
+          </td>
+          <td>
+                <code>4</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>gamma</code></td>
+          <td>
+                <code>float or array</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>width of gaussian function for gaussian basis</p>
+            </div>
+          </td>
+          <td>
+                <code>3.0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>center</code></td>
+          <td>
+                <code>float or array</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>center of gaussian function for gaussian basis</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>cutoff_type</code></td>
+          <td>
+                <code>string</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>cutoff function to use with the basis.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;f1&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>act</code></td>
+          <td>
+                <code>string</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>activation function to use</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;tanh&#39;</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
+</div>
 
 
-  <div class="doc doc-object doc-method">
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.PiNet.call" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">)</span></code>
-
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
 
+  <div class="doc doc-contents ">
+  
       <p>PiNet takes batches atomic data as input, the following keys are
 required in the input dictionary of tensors:</p>
 <ul>
@@ -525,85 +648,106 @@ dictionary:</p>
 <li><code>prop</code>: initial properties <code>(n_pairs, n_elems)</code>;</li>
 </ul>
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>tensors</code></td>
-        <td><code>dict of tensors</code></td>
-        <td><p>input tensors</p></td>
-        <td><em>required</em></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>tensor</code></td>
-      <td><p>output tensor with shape <code>[n_atoms, out_nodes]</code></p></td>
-    </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>tensors</code></td>
+          <td>
+                <code>dict of tensors</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>input tensors</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>output</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>output tensor with shape <code>[n_atoms, out_nodes]</code></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
-
+</div>
 
 
 
   </div>
 
-    </div>
-
   </div>
 
-<h2 id="layer-specifications">Layer specifications</h2>
+</div><h2 id="layer-specifications">Layer specifications</h2>
 <h3 id="pinetfflayer">pinet.FFLayer</h3>
 
 
-  <div class="doc doc-object doc-class">
+<div class="doc doc-object doc-class">
 
 
-    <div class="doc doc-contents first">
 
-      <p>The FFLayer is a shortcut to create a multi-layer perceptron (MLP) or a
-feed-forward network. A FFLayer takes one tensor as input of arbitratry
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
+
+  
+      <p><code>FFLayer</code> is a shortcut to create a multi-layer perceptron (MLP) or a
+feed-forward network. A <code>FFLayer</code> takes one tensor as input of arbitratry
 shape, and parse it to a list of <code>tf.keras.layers.Dense</code> layers, specified
 by <code>n_nodes</code>. Each dense layer transforms the input variable as:</p>
 <div class="arithmatex">\[
 \begin{aligned}
-\mathbb{X}'_{\ldots{}l} &amp;= \mathrm{Dense}(\mathbb{X}_{\ldots{}k}) \\
-  &amp;= h\left( \sum_k W_{kl} \mathbb{X}_{\ldots{}k} + b_{l} \right)
+\mathbb{X}'_{\ldots{}d} &amp;= \mathrm{Dense}(\mathbb{X}_{\ldots{}c}) \\
+  &amp;= h\left( \sum_c W_{cd} \mathbb{X}_{\ldots{}c} + b_{d} \right)
 \end{aligned}
 \]</div>
-<p>, where <span class="arithmatex">\(W_{kl}\)</span>, <span class="arithmatex">\(b_{l}\)</span> are the learnable weights and biases, <span class="arithmatex">\(h\)</span> is the
-activation function, and <span class="arithmatex">\(\mathbb{X}\)</span> can be <span class="arithmatex">\(\mathbb{P}_{ik}\)</span> or
-<span class="arithmatex">\(\mathbb{I}_{ijk}\)</span> with <span class="arithmatex">\(k,l\)</span> being the number of input/output channels. The
+<p>, where <span class="arithmatex">\(W_{cd}\)</span>, <span class="arithmatex">\(b_{d}\)</span> are the learnable weights and biases, <span class="arithmatex">\(h\)</span> is the
+activation function, and <span class="arithmatex">\(\mathbb{X}\)</span> can be <span class="arithmatex">\(\mathbb{P}_{ic}\)</span> or
+<span class="arithmatex">\(\mathbb{I}_{ijc}\)</span> with <span class="arithmatex">\(c,d\)</span> being the indices of input/output channels. The
 keyward arguments are parsed into the class, which can be used to specify
 the bias, activation function, etc for the dense layer. <code>FFLayer</code> outputs a
-tensor with the shape <code>[..., n_nodes[-1]]</code>.</p>
+tensor with the shape <code>[..., d]</code>, where <code>d=n_nodes[-1]</code>.</p>
 <p>In the PiNet architecture, <code>PPLayer</code> and <code>IILayer</code> are both instances of the
 <code>FFLayer</code> class, with the difference that <code>IILayer</code>s have their baises set
 to zero to avoid discontinuity in the model output.</p>
 
 
-
+  
 
   <div class="doc doc-children">
 
@@ -615,145 +759,184 @@ to zero to avoid discontinuity in the model output.</p>
 
 
 
-  <div class="doc doc-object doc-method">
+
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.FFLayer.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
+
+  <div class="doc doc-contents ">
+  
 
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>n_nodes</code></td>
-        <td><code>list</code></td>
-        <td><p>dimension of the layers</p></td>
-        <td><code>[64, 64]</code></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-      <tr>
-        <td><code>**kwargs</code></td>
-        <td><code>dict</code></td>
-        <td><p>options to be parsed to dense layers</p></td>
-        <td><code>{}</code></td>
-      </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>n_nodes</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>dimension of the layers</p>
+            </div>
+          </td>
+          <td>
+                <code>[64, 64]</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>options to be parsed to dense layers</p>
+            </div>
+          </td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
+</div>
 
 
-  <div class="doc doc-object doc-method">
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.FFLayer.call" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span></code>
-
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
+
+  <div class="doc doc-contents ">
+  
 
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>tensor</code></td>
-        <td><code>tensor</code></td>
-        <td><p>tensor with shape <code>(...,k)</code> as input</p></td>
-        <td><em>required</em></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>tensor</code></td>
-      <td><p>tensor with shape <code>(...,n_nodes[-1])</code></p></td>
-    </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>tensor</code></td>
+          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>tensor with shape <code>(...,c)</code> as input</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>tensor</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>tensor with shape <code>(...,n_nodes[-1])</code></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
-
+</div>
 
 
 
   </div>
 
-    </div>
-
   </div>
 
-<h3 id="pinetpilayer">pinet.PILayer</h3>
+</div><h3 id="pinetpilayer">pinet.PILayer</h3>
 
 
-  <div class="doc doc-object doc-class">
+<div class="doc doc-object doc-class">
 
 
-    <div class="doc doc-contents first">
 
-      <p>The PILayer takes the properties (<span class="arithmatex">\(\mathbb{P}_{ik}, \mathbb{P}_{jk}\)</span>) of
-a pair of atoms as input and outputs a set of interactions for each pair.
-The input <span class="arithmatex">\(\mathbb{P}_{i}, \mathbb{P}_{j}\)</span> will be concatenated as the input
-of a feed-forward neural network (FFLayer), and the interactions are
-generated by taking the output of the FFLayer as weights of radial basis
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
+
+  
+      <p><code>PILayer</code> takes the properties (<span class="arithmatex">\(\mathbb{P}_{ik}, \mathbb{P}_{jk}\)</span>) of a
+pair of atoms as input and outputs a set of interactions for each pair. The
+input <span class="arithmatex">\(\mathbb{P}_{i}, \mathbb{P}_{j}\)</span> will be concatenated as the input of
+a feed-forward neural network (<code>FFLayer</code>), and the interactions are
+generated by taking the output of the <code>FFLayer</code> as weights of radial basis
 functions, i.e.:</p>
 <div class="arithmatex">\[
 \begin{aligned}
-\mathbb{I}^{w}_{ij(bl)} &amp;= \mathrm{FFLayer}(\mathbb{P}_{ik}\Vert\mathbb{P}_{jk}) \\
-\mathbb{I}_{ijl} &amp;= \sum_b \mathbb{I}^{w}_{ij(bl)} \cdot e_{ijb}
+\mathbb{I}^{w}_{ij(bd)} &amp;= \mathrm{FFLayer}(\mathbb{P}_{ic}\Vert\mathbb{P}_{jc}) \\
+\mathbb{I}_{ijd} &amp;= \sum_b \mathbb{I}^{w}_{ij(bd)} \cdot e_{ijb}
 \end{aligned}
 \]</div>
-<p>, where <span class="arithmatex">\(\mathbb{I}^{w}_{ij(bl)}\)</span> is an intemediate weigh tensor for the
-radial basis functions, output by the FFLayer, <span class="arithmatex">\(b\)</span> is the index for the
-basis function and <span class="arithmatex">\(l\)</span> is the index for output interaction.</p>
-<p><code>n_nodes</code> specifies the number of nodes in the FFLayer. Note that the last
+<p>, where <span class="arithmatex">\(\mathbb{I}^{w}_{ij(bd)}\)</span> is an intemediate weigh tensor for the
+radial basis functions, output by the <code>FFLayer</code>, <span class="arithmatex">\(b\)</span> is the index for the
+basis function and <span class="arithmatex">\(d\)</span> is the index for output interaction.</p>
+<p><code>n_nodes</code> specifies the number of nodes in the <code>FFLayer</code>. Note that the last
 element of n_nodes specifies the number of output channels after applying
-the basis function (<span class="arithmatex">\(l\)</span> instead of <span class="arithmatex">\(bl\)</span>), i.e. the output dimension of
-FFLayer is <code>[pairs,n_nodes[-1]*n_basis]</code>, the output is then summed with the
-basis to form the output interaction.</p>
+the basis function (<span class="arithmatex">\(d\)</span> instead of <span class="arithmatex">\(bd\)</span>), i.e. the output dimension of
+FFLayer is <code>[n_pairs,n_nodes[-1]*n_basis]</code>, the output is then summed with
+the basis to form the output interaction.</p>
 
 
-
+  
 
   <div class="doc doc-children">
 
@@ -765,66 +948,83 @@ basis to form the output interaction.</p>
 
 
 
-  <div class="doc doc-object doc-method">
+
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.PILayer.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
+
+  <div class="doc doc-contents ">
+  
 
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>n_nodes</code></td>
-        <td></td>
-        <td><p>number of nodes to use</p></td>
-        <td><code>[64]</code></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-      <tr>
-        <td><code>**kwargs</code></td>
-        <td></td>
-        <td><p>keyword arguments will be parsed to the feed forward layers</p></td>
-        <td><code>{}</code></td>
-      </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>n_nodes</code></td>
+          <td>
+                <code>list of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>number of nodes to use</p>
+            </div>
+          </td>
+          <td>
+                <code>[64]</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>keyword arguments will be parsed to the feed forward layers</p>
+            </div>
+          </td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
+</div>
 
 
+<div class="doc doc-object doc-function">
 
-  <div class="doc doc-object doc-method">
 
 
 
 <h4 id="pinn.networks.pinet.PILayer.call" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">)</span></code>
-
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
 
+  <div class="doc doc-contents ">
+  
       <p>PILayer take a list of three tensors as input:</p>
 <ul>
 <li>ind_2: sparse indices of pairs with shape <code>(n_pairs, 2)</code></li>
@@ -832,74 +1032,95 @@ basis to form the output interaction.</p>
 <li>basis: interaction tensor with shape <code>(n_pairs, n_basis)</code></li>
 </ul>
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>tensors</code></td>
-        <td><code>list of tensors</code></td>
-        <td><p>list of <code>[ind_2, prop, basis]</code> tensors</p></td>
-        <td><em>required</em></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>tensor</code></td>
-      <td><p>interaction tensor with shape <code>(n_pairs, n_nodes[-1])</code></p></td>
-    </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>tensors</code></td>
+          <td>
+                <code>list of tensors</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>list of <code>[ind_2, prop, basis]</code> tensors</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>inter</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>interaction tensor with shape <code>(n_pairs, n_nodes[-1])</code></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
-
+</div>
 
 
 
   </div>
 
-    </div>
-
   </div>
 
-<h3 id="pinetiplayer">pinet.IPLayer</h3>
+</div><h3 id="pinetiplayer">pinet.IPLayer</h3>
 
 
-  <div class="doc doc-object doc-class">
+<div class="doc doc-object doc-class">
 
 
-    <div class="doc doc-contents first">
 
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
+
+  
       <p>The IPLayer transforms pairwise interactions to atomic properties</p>
 <p>The IPLayer has no learnable variables and simply sums up the pairwise
 interations. Thus the returned property has the same shape with the
 input interaction, i.e.:</p>
 <div class="arithmatex">\[
 \begin{aligned}
-\mathbb{P}_{ik} = \mathrm{IPLayer}(\mathbb{I}_{ijk}) = \sum_{j} \mathbb{I}_{ijk}
+\mathbb{P}_{ic} = \mathrm{IPLayer}(\mathbb{I}_{ijc}) = \sum_{j} \mathbb{I}_{ijc}
 \end{aligned}
 \]</div>
 
 
-
+  
 
   <div class="doc doc-children">
 
@@ -911,41 +1132,40 @@ input interaction, i.e.:</p>
 
 
 
-  <div class="doc doc-object doc-method">
+
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.IPLayer.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">()</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
 
+  <div class="doc doc-contents ">
+  
       <p>IPLayer does not require any parameter, initialize as <code>IPLayer()</code>.</p>
-
-    </div>
 
   </div>
 
+</div>
 
 
-  <div class="doc doc-object doc-method">
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.IPLayer.call" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">)</span></code>
-
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
 
+  <div class="doc doc-contents ">
+  
       <p>IPLayer take a list of three tensors list as input:</p>
 <ul>
 <li>ind_2: sparse indices of pairs with shape <code>(n_pairs, 2)</code></li>
@@ -953,63 +1173,84 @@ input interaction, i.e.:</p>
 <li>inter: interaction tensor with shape <code>(n_pairs, n_inter)</code></li>
 </ul>
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>tensors</code></td>
-        <td><code>list of tensor</code></td>
-        <td><p>list of [ind_2, prop, inter] tensors</p></td>
-        <td><em>required</em></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>tensor</code></td>
-      <td><p>new property tensor with shape <code>(n_atoms, n_inter)</code></p></td>
-    </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>tensors</code></td>
+          <td>
+                <code>list of tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>list of [ind_2, prop, inter] tensors</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>prop</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>new property tensor with shape <code>(n_atoms, n_inter)</code></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
-
+</div>
 
 
 
   </div>
 
-    </div>
-
   </div>
 
-<h3 id="pinetresupdate">pinet.ResUpdate</h3>
+</div><h3 id="pinetresupdate">pinet.ResUpdate</h3>
 
 
-  <div class="doc doc-object doc-class">
+<div class="doc doc-object doc-class">
 
 
-    <div class="doc doc-contents first">
 
-      <p>The ResUpdate layer implements ResNet-like update of properties that
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
+
+  
+      <p><code>ResUpdate</code> layer implements ResNet-like update of properties that
 addresses vanishing/exploding gradient problems (see
 <a href="https://arxiv.org/abs/1512.03385">arXiv:1512.03385</a>).</p>
 <p>It takes two tensors (old and new) as input, the tensors should have the
@@ -1021,17 +1262,17 @@ to the new after a learnable linear transformation that matches its shape to
 the new tensor, i.e.:</p>
 <div class="arithmatex">\[
 \begin{aligned}
-\mathbb{X}'_{\ldots{}l} &amp;= \mathrm{ResUpdate}(\mathbb{X}^{\mathrm{old}}_{\ldots{}k},\mathbb{X}^{\mathrm{new}}_{\ldots{}l}) &amp; \\
+\mathbb{X}'_{\ldots{}l} &amp;= \mathrm{ResUpdate}(\mathbb{X}^{\mathrm{old}}_{\ldots{}c},\mathbb{X}^{\mathrm{new}}_{\ldots{}d}) &amp; \\
   &amp;= \begin{cases}
-       \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \textrm{, if } k = l \\
-       \sum_{k} W_{kl} \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \textrm{, if } k \ne l \\
+       \mathbb{X}^{\mathrm{old}}_{\ldots{}c} + \mathbb{X}^{\mathrm{new}}_{\ldots{}d} &amp; \textrm{, if } c = d \\
+       \sum_{c} W_{cd} \mathbb{X}^{\mathrm{old}}_{\ldots{}c} + \mathbb{X}^{\mathrm{new}}_{\ldots{}d} &amp; \textrm{, if } c \ne d \\
      \end{cases}
 \end{aligned}
 \]</div>
 <p>, where <span class="arithmatex">\(W_{kl}\)</span> is a learnable weight matrix if needed.</p>
 
 
-
+  
 
   <div class="doc doc-children">
 
@@ -1043,106 +1284,125 @@ the new tensor, i.e.:</p>
 
 
 
-  <div class="doc doc-object doc-method">
+
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.ResUpdate.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">()</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
 
+  <div class="doc doc-contents ">
+  
       <p>ResUpdate does not require any parameter, initialize as <code>ResUpdate()</code>.</p>
-
-    </div>
 
   </div>
 
+</div>
 
 
+<div class="doc doc-object doc-function">
 
-  <div class="doc doc-object doc-method">
 
 
 
 <h4 id="pinn.networks.pinet.ResUpdate.call" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">)</span></code>
-
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
+
+  <div class="doc doc-contents ">
+  
 
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>tensors</code></td>
-        <td><code>list of tensors</code></td>
-        <td><p>two tensors with matching shapes expect the last dimension</p></td>
-        <td><em>required</em></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>tensor</code></td>
-      <td><p>updated tensor with the same shape as the second input tensor</p></td>
-    </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>tensors</code></td>
+          <td>
+                <code>list of tensors</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>two tensors with matching shapes expect the last dimension</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>tensor</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>updated tensor with the same shape as the second input tensor</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
-
+</div>
 
 
 
   </div>
 
-    </div>
-
   </div>
 
-<h3 id="pinetoutlayer">pinet.OutLayer</h3>
+</div><h3 id="pinetoutlayer">pinet.OutLayer</h3>
 
 
-  <div class="doc doc-object doc-class">
+<div class="doc doc-object doc-class">
 
 
-    <div class="doc doc-contents first">
 
-      <p>The OutLayer is a simple combination of the FFLayer and the ResUpdate
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="tensorflow.keras.layers.Layer">Layer</span></code></p>
+
+  
+      <p><code>OutLayer</code> is a simple combination of the <code>FFLayer</code> and the <code>ResUpdate</code>
 layer, where the <code>out_units</code> controls the dimension of outputs. In addition
-to the FFLayer, the OutLayer has one additional linear biasless layer that
-scales the outputs.</p>
+to the <code>FFLayer</code> specified by <code>n_nodes</code>, the <code>OutLayer</code> has one additional
+linear biasless layer that scales the outputs, specified by <code>out_units</code>.</p>
 
 
-
+  
 
   <div class="doc doc-children">
 
@@ -1154,71 +1414,97 @@ scales the outputs.</p>
 
 
 
-  <div class="doc doc-object doc-method">
+
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.OutLayer.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">,</span> <span class="n">out_units</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-  </span>
+          <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">,</span> <span class="n">out_units</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
+
+  <div class="doc doc-contents ">
+  
 
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>n_nodes</code></td>
-        <td><code>list</code></td>
-        <td><p>dimension of the hidden layers</p></td>
-        <td><em>required</em></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-      <tr>
-        <td><code>out_units</code></td>
-        <td><code>in</code></td>
-        <td><p>dimension of the output units</p></td>
-        <td><em>required</em></td>
-      </tr>
-      <tr>
-        <td><code>**kwargs</code></td>
-        <td><code>dict</code></td>
-        <td><p>options to be parsed to dense layers</p></td>
-        <td><code>{}</code></td>
-      </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>n_nodes</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>dimension of the hidden layers</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>out_units</code></td>
+          <td>
+                <code>in</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>dimension of the output units</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>options to be parsed to dense layers</p>
+            </div>
+          </td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
+</div>
 
 
-  <div class="doc doc-object doc-method">
+<div class="doc doc-object doc-function">
+
 
 
 
 <h4 id="pinn.networks.pinet.OutLayer.call" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">)</span></code>
-
+          <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span></code>
 
 </h4>
 
-    <div class="doc doc-contents ">
 
+  <div class="doc doc-contents ">
+  
       <p>OutLayer takes a list of three tensors as input:</p>
 <ul>
 <li>ind_1: sparse indices of atoms with shape <code>(n_atoms, 2)</code></li>
@@ -1226,469 +1512,75 @@ scales the outputs.</p>
 <li>prev_output:  previous output with shape <code>(n_atoms, out_units)</code></li>
 </ul>
 
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
       <tr>
-        <td><code>tensors</code></td>
-        <td><code>list of tensors</code></td>
-        <td><p>list of [ind_1, prop, prev_output] tensors</p></td>
-        <td><em>required</em></td>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
       </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>tensor</code></td>
-      <td><p>an updated output tensor with shape <code>(n_atoms, out_units)</code></p></td>
-    </tr>
-  </tbody>
-</table>
-    </div>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>tensors</code></td>
+          <td>
+                <code>list of tensors</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>list of [ind_1, prop, prev_output] tensors</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>output</code></td>          <td>
+                <code>tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>an updated output tensor with shape <code>(n_atoms, out_units)</code></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
-
+</div>
 
 
 
   </div>
 
-    </div>
-
   </div>
 
-<h2 id="source-code">Source Code</h2>
-<details>
-<summary>pinn/networks/pinet.py</summary>
-<div class="highlight"><pre><span></span><code><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
-<span class="kn">from</span> <span class="nn">pinn.utils</span> <span class="kn">import</span> <span class="n">pi_named</span><span class="p">,</span> <span class="n">connect_dist_grad</span>
-<span class="kn">from</span> <span class="nn">pinn.layers</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">CellListNL</span><span class="p">,</span>
-    <span class="n">CutoffFunc</span><span class="p">,</span>
-    <span class="n">PolynomialBasis</span><span class="p">,</span>
-    <span class="n">GaussianBasis</span><span class="p">,</span>
-    <span class="n">AtomicOnehot</span><span class="p">,</span>
-    <span class="n">ANNOutput</span><span class="p">,</span>
-<span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">FFLayer</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The FFLayer is a shortcut to create a multi-layer perceptron (MLP) or a</span>
-<span class="sd">    feed-forward network. A FFLayer takes one tensor as input of arbitratry</span>
-<span class="sd">    shape, and parse it to a list of `tf.keras.layers.Dense` layers, specified</span>
-<span class="sd">    by `n_nodes`. Each dense layer transforms the input variable as:</span>
-
-<span class="sd">    $$</span>
-<span class="sd">    \\begin{aligned}</span>
-<span class="sd">    \mathbb{X}&#39;_{\ldots{}l} &amp;= \mathrm{Dense}(\mathbb{X}_{\ldots{}k}) \\\\</span>
-<span class="sd">      &amp;= h\left( \sum_k W_{kl} \mathbb{X}_{\ldots{}k} + b_{l} \\right)</span>
-<span class="sd">    \end{aligned}</span>
-<span class="sd">    $$</span>
-
-<span class="sd">    , where $W_{kl}$, $b_{l}$ are the learnable weights and biases, $h$ is the</span>
-<span class="sd">    activation function, and $\mathbb{X}$ can be $\mathbb{P}_{ik}$ or</span>
-<span class="sd">    $\mathbb{I}_{ijk}$ with $k,l$ being the number of input/output channels. The</span>
-<span class="sd">    keyward arguments are parsed into the class, which can be used to specify</span>
-<span class="sd">    the bias, activation function, etc for the dense layer. `FFLayer` outputs a</span>
-<span class="sd">    tensor with the shape `[..., n_nodes[-1]]`.</span>
-
-
-<span class="sd">    In the PiNet architecture, `PPLayer` and `IILayer` are both instances of the</span>
-<span class="sd">    `FFLayer` class, with the difference that `IILayer`s have their baises set</span>
-<span class="sd">    to zero to avoid discontinuity in the model output.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            n_nodes (list): dimension of the layers</span>
-<span class="sd">            **kwargs (dict): options to be parsed to dense layers</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">FFLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dense_layers</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="n">n_node</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">n_node</span> <span class="ow">in</span> <span class="n">n_nodes</span>
-        <span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            tensor (tensor): tensor with shape `(...,k)` as input</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tensor: tensor with shape `(...,n_nodes[-1])`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_layers</span><span class="p">:</span>
-            <span class="n">tensor</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">tensor</span>
-
-
-<span class="k">class</span> <span class="nc">PILayer</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The PILayer takes the properties ($\mathbb{P}_{ik}, \mathbb{P}_{jk}$) of</span>
-<span class="sd">    a pair of atoms as input and outputs a set of interactions for each pair.</span>
-<span class="sd">    The input $\mathbb{P}_{i}, \mathbb{P}_{j}$ will be concatenated as the input</span>
-<span class="sd">    of a feed-forward neural network (FFLayer), and the interactions are</span>
-<span class="sd">    generated by taking the output of the FFLayer as weights of radial basis</span>
-<span class="sd">    functions, i.e.:</span>
-
-<span class="sd">    $$</span>
-<span class="sd">    \\begin{aligned}</span>
-<span class="sd">    \mathbb{I}^{w}_{ij(bl)} &amp;= \mathrm{FFLayer}(\mathbb{P}_{ik}\Vert\mathbb{P}_{jk}) \\\\</span>
-<span class="sd">    \mathbb{I}_{ijl} &amp;= \sum_b \mathbb{I}^{w}_{ij(bl)} \cdot e_{ijb}</span>
-<span class="sd">    \end{aligned}</span>
-<span class="sd">    $$</span>
-
-<span class="sd">    , where $\mathbb{I}^{w}_{ij(bl)}$ is an intemediate weigh tensor for the</span>
-<span class="sd">    radial basis functions, output by the FFLayer, $b$ is the index for the</span>
-<span class="sd">    basis function and $l$ is the index for output interaction.</span>
-
-
-<span class="sd">    `n_nodes` specifies the number of nodes in the FFLayer. Note that the last</span>
-<span class="sd">    element of n_nodes specifies the number of output channels after applying</span>
-<span class="sd">    the basis function ($l$ instead of $bl$), i.e. the output dimension of</span>
-<span class="sd">    FFLayer is `[pairs,n_nodes[-1]*n_basis]`, the output is then summed with the</span>
-<span class="sd">    basis to form the output interaction.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            n_nodes: number of nodes to use</span>
-<span class="sd">            **kwargs: keyword arguments will be parsed to the feed forward layers</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">PILayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes</span> <span class="o">=</span> <span class="n">n_nodes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
-
-    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_basis</span> <span class="o">=</span> <span class="n">shapes</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">n_nodes_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">n_nodes_iter</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_basis</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ff_layer</span> <span class="o">=</span> <span class="n">FFLayer</span><span class="p">(</span><span class="n">n_nodes_iter</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        PILayer take a list of three tensors as input:</span>
-
-<span class="sd">          - ind_2: sparse indices of pairs with shape `(n_pairs, 2)`</span>
-<span class="sd">          - prop: property tensor with shape `(n_atoms, n_prop)`</span>
-<span class="sd">          - basis: interaction tensor with shape `(n_pairs, n_basis)`</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            tensors (list of tensors): list of `[ind_2, prop, basis]` tensors</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tensor: interaction tensor with shape `(n_pairs, n_nodes[-1])`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ind_2</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">basis</span> <span class="o">=</span> <span class="n">tensors</span>
-        <span class="n">ind_i</span> <span class="o">=</span> <span class="n">ind_2</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
-        <span class="n">ind_j</span> <span class="o">=</span> <span class="n">ind_2</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">prop_i</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">prop</span><span class="p">,</span> <span class="n">ind_i</span><span class="p">)</span>
-        <span class="n">prop_j</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">prop</span><span class="p">,</span> <span class="n">ind_j</span><span class="p">)</span>
-
-        <span class="n">inter</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">prop_i</span><span class="p">,</span> <span class="n">prop_j</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">inter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff_layer</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span>
-        <span class="n">inter</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_basis</span><span class="p">])</span>
-        <span class="n">inter</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;pcb,pb-&gt;pc&quot;</span><span class="p">,</span> <span class="n">inter</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">inter</span>
-
-
-<span class="k">class</span> <span class="nc">IPLayer</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The IPLayer transforms pairwise interactions to atomic properties</span>
-
-<span class="sd">    The IPLayer has no learnable variables and simply sums up the pairwise</span>
-<span class="sd">    interations. Thus the returned property has the same shape with the</span>
-<span class="sd">    input interaction, i.e.:</span>
-
-<span class="sd">    $$</span>
-<span class="sd">    \\begin{aligned}</span>
-<span class="sd">    \mathbb{P}_{ik} = \mathrm{IPLayer}(\mathbb{I}_{ijk}) = \sum_{j} \mathbb{I}_{ijk}</span>
-<span class="sd">    \end{aligned}</span>
-<span class="sd">    $$</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        IPLayer does not require any parameter, initialize as `IPLayer()`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">IPLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        IPLayer take a list of three tensors list as input:</span>
-
-<span class="sd">          - ind_2: sparse indices of pairs with shape `(n_pairs, 2)`</span>
-<span class="sd">          - prop: property tensor with shape `(n_atoms, n_prop)`</span>
-<span class="sd">          - inter: interaction tensor with shape `(n_pairs, n_inter)`</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            tensors (list of tensor): list of [ind_2, prop, inter] tensors</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tensor: new property tensor with shape `(n_atoms, n_inter)`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ind_2</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">inter</span> <span class="o">=</span> <span class="n">tensors</span>
-        <span class="n">n_atoms</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">prop</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">unsorted_segment_sum</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">ind_2</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">n_atoms</span><span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">OutLayer</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The OutLayer is a simple combination of the FFLayer and the ResUpdate</span>
-<span class="sd">    layer, where the `out_units` controls the dimension of outputs. In addition</span>
-<span class="sd">    to the FFLayer, the OutLayer has one additional linear biasless layer that</span>
-<span class="sd">    scales the outputs.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">,</span> <span class="n">out_units</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            n_nodes (list): dimension of the hidden layers</span>
-<span class="sd">            out_units (in): dimension of the output units</span>
-<span class="sd">            **kwargs (dict): options to be parsed to dense layers</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">OutLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">out_units</span> <span class="o">=</span> <span class="n">out_units</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ff_layer</span> <span class="o">=</span> <span class="n">FFLayer</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">out_units</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span>
-            <span class="n">out_units</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        OutLayer takes a list of three tensors as input:</span>
-
-<span class="sd">        - ind_1: sparse indices of atoms with shape `(n_atoms, 2)`</span>
-<span class="sd">        - prop: property tensor with shape `(n_atoms, n_prop)`</span>
-<span class="sd">        - prev_output:  previous output with shape `(n_atoms, out_units)`</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            tensors (list of tensors): list of [ind_1, prop, prev_output] tensors</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tensor: an updated output tensor with shape `(n_atoms, out_units)`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ind_1</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">prev_output</span> <span class="o">=</span> <span class="n">tensors</span>
-        <span class="n">prop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff_layer</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_units</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span> <span class="o">+</span> <span class="n">prev_output</span>
-        <span class="k">return</span> <span class="n">output</span>
-
-
-<span class="k">class</span> <span class="nc">GCBlock</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pp_nodes</span><span class="p">,</span> <span class="n">pi_nodes</span><span class="p">,</span> <span class="n">ii_nodes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">GCBlock</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="n">iiargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">iiargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pp_layer</span> <span class="o">=</span> <span class="n">FFLayer</span><span class="p">(</span><span class="n">pp_nodes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pi_layer</span> <span class="o">=</span> <span class="n">PILayer</span><span class="p">(</span><span class="n">pi_nodes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ii_layer</span> <span class="o">=</span> <span class="n">FFLayer</span><span class="p">(</span><span class="n">ii_nodes</span><span class="p">,</span> <span class="o">**</span><span class="n">iiargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ip_layer</span> <span class="o">=</span> <span class="n">IPLayer</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">):</span>
-        <span class="n">ind_2</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">basis</span> <span class="o">=</span> <span class="n">tensors</span>
-        <span class="n">prop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pp_layer</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span>
-        <span class="n">inter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi_layer</span><span class="p">([</span><span class="n">ind_2</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">basis</span><span class="p">])</span>
-        <span class="n">inter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ii_layer</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span>
-        <span class="n">prop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ip_layer</span><span class="p">([</span><span class="n">ind_2</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">inter</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">prop</span>
-
-
-<span class="k">class</span> <span class="nc">ResUpdate</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ResUpdate layer implements ResNet-like update of properties that</span>
-<span class="sd">    addresses vanishing/exploding gradient problems (see</span>
-<span class="sd">    [arXiv:1512.03385](https://arxiv.org/abs/1512.03385)).</span>
-
-<span class="sd">    It takes two tensors (old and new) as input, the tensors should have the</span>
-<span class="sd">    same shape except for the last dimension, and a tensor with the shape of the</span>
-<span class="sd">    new tensor is always returned.</span>
-
-<span class="sd">    If shapes of the two tensors match, their sum is returned. If the two</span>
-<span class="sd">    tensors&#39; shapes differ in the last dimension, the old tensor will be added</span>
-<span class="sd">    to the new after a learnable linear transformation that matches its shape to</span>
-<span class="sd">    the new tensor, i.e.:</span>
-
-<span class="sd">    $$</span>
-<span class="sd">    \\begin{aligned}</span>
-<span class="sd">    \mathbb{X}&#39;_{\ldots{}l} &amp;= \mathrm{ResUpdate}(\mathbb{X}^{\mathrm{old}}_{\ldots{}k},\mathbb{X}^{\mathrm{new}}_{\ldots{}l}) &amp; \\\\</span>
-<span class="sd">      &amp;= \\begin{cases}</span>
-<span class="sd">           \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \\textrm{, if } k = l \\\\</span>
-<span class="sd">           \sum_{k} W_{kl} \mathbb{X}^{\mathrm{old}}_{\ldots{}k} + \mathbb{X}^{\mathrm{new}}_{\ldots{}l} &amp; \\textrm{, if } k \\ne l \\\\</span>
-<span class="sd">         \end{cases}</span>
-<span class="sd">    \end{aligned}</span>
-<span class="sd">    $$</span>
-
-<span class="sd">    , where $W_{kl}$ is a learnable weight matrix if needed.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ResUpdate does not require any parameter, initialize as `ResUpdate()`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ResUpdate</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
-        <span class="k">if</span> <span class="n">shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">shapes</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span>
-                <span class="n">shapes</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span>
-            <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">           tensors (list of tensors): two tensors with matching shapes expect the last dimension</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">           tensor: updated tensor with the same shape as the second input tensor</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="o">=</span> <span class="n">tensors</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">old</span><span class="p">)</span> <span class="o">+</span> <span class="n">new</span>
-
-
-<span class="k">class</span> <span class="nc">PreprocessLayer</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom_types</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">PreprocessLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">embed</span> <span class="o">=</span> <span class="n">AtomicOnehot</span><span class="p">(</span><span class="n">atom_types</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nl_layer</span> <span class="o">=</span> <span class="n">CellListNL</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">):</span>
-        <span class="n">tensors</span> <span class="o">=</span> <span class="n">tensors</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;elems&quot;</span><span class="p">,</span> <span class="s2">&quot;dist&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">tensors</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="n">tensors</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tensors</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">tensors</span><span class="p">[</span><span class="n">k</span><span class="p">])[:</span><span class="mi">1</span><span class="p">])</span>
-        <span class="k">if</span> <span class="s2">&quot;ind_2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">:</span>
-            <span class="n">tensors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nl_layer</span><span class="p">(</span><span class="n">tensors</span><span class="p">))</span>
-            <span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;prop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;elems&quot;</span><span class="p">]),</span> <span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;coord&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">tensors</span>
-
-
-<span class="k">class</span> <span class="nc">PiNet</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;tf.keras.Model for the PiNet network&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">atom_types</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
-        <span class="n">rc</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
-        <span class="n">cutoff_type</span><span class="o">=</span><span class="s2">&quot;f1&quot;</span><span class="p">,</span>
-        <span class="n">basis_type</span><span class="o">=</span><span class="s2">&quot;polynomial&quot;</span><span class="p">,</span>
-        <span class="n">n_basis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-        <span class="n">gamma</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
-        <span class="n">center</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">pp_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span>
-        <span class="n">pi_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span>
-        <span class="n">ii_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span>
-        <span class="n">out_nodes</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span>
-        <span class="n">out_units</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">out_pool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">act</span><span class="o">=</span><span class="s2">&quot;tanh&quot;</span><span class="p">,</span>
-        <span class="n">depth</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            atom_types (list): elements for the one-hot embedding</span>
-<span class="sd">            pp_nodes (list): number of nodes for PPLayer</span>
-<span class="sd">            pi_nodes (list): number of nodes for PILayer</span>
-<span class="sd">            ii_nodes (list): number of nodes for IILayer</span>
-<span class="sd">            out_nodes (list): number of nodes for OutLayer</span>
-<span class="sd">            depth (int): number of interaction blocks</span>
-<span class="sd">            rc (float): cutoff radius</span>
-<span class="sd">            basis_type (string): basis function, can be &quot;polynomial&quot; or &quot;gaussian&quot;</span>
-<span class="sd">            n_basis (int): number of basis functions to use</span>
-<span class="sd">            gamma (float or array): width of gaussian function for gaussian basis</span>
-<span class="sd">            center (float or array): center of gaussian function for gaussian basis</span>
-<span class="sd">            cutoff_type (string): cutoff function to use with the basis.</span>
-<span class="sd">            act (string): activation function to use</span>
-<span class="sd">            preprocess (bool): whether to return the preprocessed tensor</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">PiNet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">preprocess</span> <span class="o">=</span> <span class="n">PreprocessLayer</span><span class="p">(</span><span class="n">atom_types</span><span class="p">,</span> <span class="n">rc</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">CutoffFunc</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">cutoff_type</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">basis_type</span> <span class="o">==</span> <span class="s2">&quot;polynomial&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">basis_fn</span> <span class="o">=</span> <span class="n">PolynomialBasis</span><span class="p">(</span><span class="n">n_basis</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">basis_type</span> <span class="o">==</span> <span class="s2">&quot;gaussian&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">basis_fn</span> <span class="o">=</span> <span class="n">GaussianBasis</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">rc</span><span class="p">,</span> <span class="n">n_basis</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">res_update</span> <span class="o">=</span> <span class="p">[</span><span class="n">ResUpdate</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gc_blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">GCBlock</span><span class="p">([],</span> <span class="n">pi_nodes</span><span class="p">,</span> <span class="n">ii_nodes</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">act</span><span class="p">)]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gc_blocks</span> <span class="o">+=</span> <span class="p">[</span>
-            <span class="n">GCBlock</span><span class="p">(</span><span class="n">pp_nodes</span><span class="p">,</span> <span class="n">pi_nodes</span><span class="p">,</span> <span class="n">ii_nodes</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">act</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">out_layers</span> <span class="o">=</span> <span class="p">[</span><span class="n">OutLayer</span><span class="p">(</span><span class="n">out_nodes</span><span class="p">,</span> <span class="n">out_units</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ann_output</span> <span class="o">=</span> <span class="n">ANNOutput</span><span class="p">(</span><span class="n">out_pool</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;PiNet takes batches atomic data as input, the following keys are</span>
-<span class="sd">        required in the input dictionary of tensors:</span>
-
-<span class="sd">        - `ind_1`: sparse indices for the batched data, with shape `(n_atoms, 2)`;</span>
-<span class="sd">        - `elems`: element (atomic numbers) for each atom, with shape `(n_atoms)`;</span>
-<span class="sd">        - `coord`: coordintaes for each atom, with shape `(n_atoms, 3)`.</span>
-
-<span class="sd">        Optionally, the input dataset can be processed with</span>
-<span class="sd">        `PiNet.preprocess(tensors)`, which adds the following tensors to the</span>
-<span class="sd">        dictionary:</span>
-
-<span class="sd">        - `ind_2`: sparse indices for neighbour list, with shape `(n_pairs, 2)`;</span>
-<span class="sd">        - `dist`: distances from the neighbour list, with shape `(n_pairs)`;</span>
-<span class="sd">        - `diff`: distance vectors from the neighbour list, with shape `(n_pairs, 3)`;</span>
-<span class="sd">        - `prop`: initial properties `(n_pairs, n_elems)`;</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            tensors (dict of tensors): input tensors</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tensor: output tensor with shape `[n_atoms, out_nodes]`</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">tensors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
-        <span class="n">fc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span><span class="p">(</span><span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;dist&quot;</span><span class="p">])</span>
-        <span class="n">basis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basis_fn</span><span class="p">(</span><span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;dist&quot;</span><span class="p">],</span> <span class="n">fc</span><span class="o">=</span><span class="n">fc</span><span class="p">)</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">):</span>
-            <span class="n">prop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gc_blocks</span><span class="p">[</span><span class="n">i</span><span class="p">]([</span><span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;ind_2&quot;</span><span class="p">],</span> <span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;prop&quot;</span><span class="p">],</span> <span class="n">basis</span><span class="p">])</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_layers</span><span class="p">[</span><span class="n">i</span><span class="p">]([</span><span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;ind_1&quot;</span><span class="p">],</span> <span class="n">prop</span><span class="p">,</span> <span class="n">output</span><span class="p">])</span>
-            <span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;prop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res_update</span><span class="p">[</span><span class="n">i</span><span class="p">]([</span><span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;prop&quot;</span><span class="p">],</span> <span class="n">prop</span><span class="p">])</span>
-
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ann_output</span><span class="p">([</span><span class="n">tensors</span><span class="p">[</span><span class="s2">&quot;ind_1&quot;</span><span class="p">],</span> <span class="n">output</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">output</span>
-</code></pre></div>
-</details>
-<div class="footnote">
+</div><div class="footnote">
 <hr />
 <ol>
 <li id="fn:1">
-<p>Y. Shao, M. Hellström, P. D. Mitev, L. Knijff, and C. Zhang. PiNN: a python library for building atomic neural networks of molecules and materials. <em>J. Chem. Inf. Model.</em>, 60:1184–1193, January 2020. <a href="https://doi.org/10.1021/acs.jcim.9b00994">doi:10.1021/acs.jcim.9b00994</a>.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+<p><sup>1</sup> Y. Shao, M. Hellström, P.D. Mitev, L. Knijff, and C. Zhang, “<a href="https://doi.org/10.1021/acs.jcim.9b00994">PiNN: A python library for building atomic neural networks of molecules and materials</a>,” J. Chem. Inf. Model. <strong>60</strong>, 1184–1193 (2020).&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
 </li>
 </ol>
 </div>
@@ -1699,7 +1591,7 @@ scales the outputs.</p>
   <div class="page">
     <div class="page-prev">
       
-      <a href="../networks/" title="Overview"><span>«</span> Previous</a>
+      <a href="../layers/" title="Layers"><span>«</span> Previous</a>
       
     </div>
     <div class="page-next">

@@ -1,8 +1,12 @@
+:root {
+  font-size: 12pt;
+}
+
 .doc-properties {
   display: none;
 }
 
-.doc .highlight code {
+.doc-heading > .highlight > span {
   color: var(--theme-color);
 }
 
