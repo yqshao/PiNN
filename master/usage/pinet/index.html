@@ -755,7 +755,7 @@ activation function, and <span class="arithmatex">\(\mathbb{X}\)</span> can be <
 <span class="arithmatex">\(\mathbb{I}_{ijc}\)</span> with <span class="arithmatex">\(c,d\)</span> being the indices of input/output channels. The
 keyward arguments are parsed into the class, which can be used to specify
 the bias, activation function, etc for the dense layer. <code>FFLayer</code> outputs a
-tensor with the shape <code>[..., d]</code>, where <code>d=n_nodes[-1]</code>.</p>
+tensor with the shape <code>[..., n_nodes[-1]]</code>.</p>
 <p>In the PiNet architecture, <code>PPLayer</code> and <code>IILayer</code> are both instances of the
 <code>FFLayer</code> class, with the difference that <code>IILayer</code>s have their baises set
 to zero to avoid discontinuity in the model output.</p>
@@ -871,7 +871,7 @@ to zero to avoid discontinuity in the model output.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>tensor with shape <code>(...,c)</code> as input</p>
+              <p>input tensor</p>
             </div>
           </td>
           <td>
