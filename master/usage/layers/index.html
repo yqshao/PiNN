@@ -340,25 +340,36 @@
     </div>
 
     <div id="content">
-      <h1 id="shared-layers">Shared Layers</h1>
-<p>This page documents the common layers in different networks.</p>
-<h2 id="neighbor-list">Neighbor list</h2>
+      <h1 id="shared-parts-of-networks">Shared parts of networks</h1>
+<p>This page documents the shared layers in different networks, along with the
+convention about data structure.</p>
+<h2 id="convention">Convention</h2>
 <h3 id="sparse-indices">Sparse indices</h3>
-<p>PiNN stores the neighbour list and other vairbales defined on pairs as sparse
-slices of high order tensors. To operate those tensors, the neighbor list
-generates the indices of each pair.</p>
-<p>To construct a pairiwse variable from atom-centered ones, use the
+<p><img alt="PiNet architecture" src="../../tikz/sparse_indices.svg" width="600" /></p>
+<p>Since atomistic data comes in irregular shapes, PiNN uses sparse data structure
+for data batching, and the construction of pairwise, triplet-wise tensors. All
+these tensors are associated with indices named as <code>ind_*</code>, with shapes <code>ind_1:
+[n_atoms, 2]</code>, <code>ind_2: [n_pairs, 2]</code>, etc. The meanings of indices are:</p>
+<ul>
+<li>For <code>ind_1</code>: <code>[i-th_struct_in_batch, j-th_atom_in_struct]</code>;</li>
+<li>For <code>ind_2</code>: <code>[i-th_atom_in_batch, j-th_atom_in_batch]</code>;</li>
+<li>For <code>ind_3</code>: <code>[i-th_pair_in_batch, j-th_pair_in_batch]</code>, with shared central atom;</li>
+<li>...</li>
+</ul>
+<h2 id="using-sparse-indices">Using sparse indices</h2>
+<p>To construct a pairwise variable from atom-centered ones, use the
 <code>tf.gather_nd</code> operator, for instance the following operation broadcasts the
 atom-centered <span class="arithmatex">\(\mathbb{P}_{i\alpha}\)</span> variable to each pair of atoms
 (<span class="arithmatex">\(\mathbb{I}_{ij\alpha}=\mathbf{1}_{ij}\mathbb{P}_{i\alpha}\)</span>).</p>
 <div class="highlight"><pre><span></span><code><span class="n">I</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">gather_nd</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">ind_2</span><span class="p">)</span>
 </code></pre></div>
-<p>To sum accumulate pairwise predictions over neighbors (<span class="arithmatex">\(\mathbb{P}_{i\alpha} =
+<p>To accumulate pairwise predictions over neighbors (<span class="arithmatex">\(\mathbb{P}_{i\alpha} =
 \sum_{j} \mathbb{I}_{ij\alpha}\)</span>), use the <code>tf.scatter_nd</code> operation:</p>
-<div class="highlight"><pre><span></span><code><span class="n">P</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">gather_nd</span><span class="p">(</span><span class="n">ind_2</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">n_atoms</span><span class="p">,</span><span class="n">alpha</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="n">P</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">gather_nd</span><span class="p">(</span><span class="n">ind_2</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">n_atoms</span><span class="p">,</span> <span class="n">n_alpha</span><span class="p">])</span>
 </code></pre></div>
-<p>Note that the number of atoms must be supplied since it cannot be implied by
+<p>Note that the number of atoms must be supplied since it cannot be inferred from
 <code>ind_2</code>.</p>
+<h2 id="neighbor-list">Neighbor list</h2>
 <h3 id="celllistnl">CellListNL</h3>
 
 
@@ -454,13 +465,13 @@ atom-centered <span class="arithmatex">\(\mathbb{P}_{i\alpha}\)</span> variable 
       <p>The layer expects a dictionary of tensors from a sparse_batch
 with keys:</p>
 <ul>
-<li><code>ind_1</code>: sparse indices of atoms in batch, with shape <code>(n_atoms, 2)</code></li>
+<li><code>ind_1</code>: <a href="./#sparse-indices">sparse indices</a> of atoms in batch, with shape <code>(n_atoms, 2)</code></li>
 <li><code>coord</code>: atomic coordinate, with shape <code>(n_atoms, 3)</code></li>
 <li><code>cell</code> (optional): cell vectors with shape<code>(n_batch,3,3)</code></li>
 </ul>
 <p>It output a dictionary</p>
 <ul>
-<li><code>ind_2</code>: sparse indices of neighbor list, with shape <code>(n_pairs, 2)</code></li>
+<li><code>ind_2</code>: <a href="./#sparse-indices">sparse indices</a> of neighbor list, with shape <code>(n_pairs, 2)</code></li>
 <li><code>diff</code>: displacement vectors, with shape <code>(n_pairs, 3)</code></li>
 <li><code>dist</code>: pairwise distances, with shape <code>(n_pairs)</code></li>
 </ul>
