@@ -1,16 +1,12 @@
-# The PiNet network
+# The PiNet2 network
 
-The PiNet2 is next generation of PiNet with equivarient support. The network architecture features the
-graph-convolution which recursively generates atomic scalar and tensor properties from local
-environment. One distinctive feature of PiNet is that the convolution operation
-is realized with pairwise functions whose form are determined by the pair,
-called pairwise interactions.
+PiNet2 represents the next generation of PiNet, now equipped with equivariant support. This network architecture incorporates graph convolution to iteratively derive atomic scalar and tensor properties from the local environment. One noteworthy aspect of PiNet2 is its utilization of convolution operations that are executed through pairwise functions, whose specific forms are dictated by the pairs themselves, known as pairwise interactions, while also maintaining equivariant features.
 
 ## Network architecture
 
 The overall architecture of PiNet is illustrated with the illustration below:
 
-![PiNet architecture](../tikz/pinet3.svg){width="750"}
+![PiNet architecture](../tikz/pinet2.svg){width="750"}
 
 The preprocess part of the network are implemented with shared layers (see
 [Layers](./layers.md)). The graph-convolution (GC) block are further divided
@@ -25,6 +21,8 @@ $\mathbb{I}$ are usually standard feed-forward neural networks (`FFLayer`), the
 special part of PiNet are `PILayer` and `IPLayers`, which transform between
 those two types of variables.
 
+To 
+
 We use the subscripts to denote the dimensionality of each variable, following
 the convention:
 
@@ -38,30 +36,42 @@ available for the PiNet network are detailed below.
 
 ## Network specification
 
-### pinet.PiNet
+### pinet2.PiNet2
 
-::: pinn.networks.pinet.PiNet
+::: pinn.networks.pinet2.PiNet2
 
 ## Layer specifications
 
-### pinet.FFLayer
+### pinet2.FFLayer
 
-::: pinn.networks.pinet.FFLayer
+::: pinn.networks.pinet2.FFLayer
 
-### pinet.PILayer
+### pinet2.PILayer
 
-::: pinn.networks.pinet.PILayer
+::: pinn.networks.pinet2.PILayer
 
-### pinet.IPLayer
+### pinet2.PIXLayer
 
-::: pinn.networks.pinet.IPLayer
+::: pinn.networks.pinet2.PIXLayer
 
-### pinet.ResUpdate
+### pinet2.DotLayer
 
-::: pinn.networks.pinet.ResUpdate
+::: pinn.networks.pinet2.DotLayer
 
-### pinet.OutLayer
+### pinet2.ScaleLayer
 
-::: pinn.networks.pinet.OutLayer
+::: pinn.networks.pinet2.ScaleLayer
+
+### pinet2.IPLayer
+
+::: pinn.networks.pinet2.IPLayer
+
+### pinet2.ResUpdate
+
+::: pinn.networks.pinet2.ResUpdate
+
+### pinet2.OutLayer
+
+::: pinn.networks.pinet2.OutLayer
 
 \bibliography
