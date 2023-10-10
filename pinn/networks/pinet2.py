@@ -149,9 +149,9 @@ class PILayer(tf.keras.layers.Layer):
 
 
 class PIXLayer(tf.keras.layers.Layer):
-    R"""`PIXLayer` takes the equavariant properties ($\mathbb{P}_{ix\zeta}$, $\mathbb{P}_{jx\zeta}$) of a pair of atoms as input and outputs a set of
+    R"""`PIXLayer` takes the equalvariant properties ($\mathbb{P}_{ix\zeta}$, $\mathbb{P}_{jx\zeta}$) of a pair of atoms as input and outputs a set of
     interactions for each pair. The `PXLayer` has no learnable variables and simply applies a linear transformation to an equivariant property tensor, resulting in a new tensor of the same shape.
-    
+       
     """
 
     def __init__(self, style: StyleType, **kwargs):
@@ -210,16 +210,17 @@ class DotLayer(tf.keras.layers.Layer):
         self.style = style
 
     def build(self, shapes):
+
         if self.style == "painn" or self.style == "general":
-            self.wi = tf.keras.layers.Dense(shapes[1][-1])
-            self.wj = tf.keras.layers.Dense(shapes[1][-1])
+            self.wi = tf.keras.layers.Dense(shapes[-1])
+            self.wj = tf.keras.layers.Dense(shapes[-1])
         elif self.style == "newton":
             raise NotImplementedError("Not implemented yet")
         elif self.style == "simple":
             pass
 
 
-    def __call__(self, tensor):
+    def call(self, tensor):
 
         if self.style == "painn" or self.style == "general":
             return tf.einsum("ixr,ixr->ir", self.wi(tensor), self.wj(tensor))
@@ -372,7 +373,7 @@ class GCBlock(tf.keras.layers.Layer):
 
         i3 = self.pix_layer([ind_2, p3])
         i3 = self.scale1_layer([i3, i1_3])
-        scaled_diff = self.scale2_layer([diff[:,:,None], i1_3])
+        scaled_diff = self.scale2_layer([diff[:,:,None], i1_1])
         i3 = i3 + scaled_diff
         p3 = self.ip3_layer([ind_2, p3, i3])
 
@@ -480,7 +481,7 @@ class PiNet2(tf.keras.Model):
         out_pool=False,
         act="tanh",
         depth=4,
-        style=StyleType
+        style: StyleType = "simple"
     ):
         """
         Args:
@@ -511,9 +512,9 @@ class PiNet2(tf.keras.Model):
             self.basis_fn = GaussianBasis(center, gamma, rc, n_basis)
 
         self.res_update = [ResUpdate() for i in range(depth)]
-        self.gc_blocks = [GCBlock("simple", [], pi_nodes, ii_nodes, activation=act)]
+        self.gc_blocks = [GCBlock(style, [], pi_nodes, ii_nodes, activation=act)]
         self.gc_blocks += [
-            GCBlock("simple", pp_nodes, pi_nodes, ii_nodes, activation=act)
+            GCBlock(style, pp_nodes, pi_nodes, ii_nodes, activation=act)
             for i in range(depth - 1)
         ]
         self.out_layers = [OutLayer(out_nodes, out_units) for i in range(depth)]
