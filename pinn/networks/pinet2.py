@@ -480,7 +480,7 @@ class PiNet2(tf.keras.Model):
         out_pool=False,
         act="tanh",
         depth=4,
-        style=StyleType
+        style: StyleType = "simple"
     ):
         """
         Args:
@@ -511,9 +511,9 @@ class PiNet2(tf.keras.Model):
             self.basis_fn = GaussianBasis(center, gamma, rc, n_basis)
 
         self.res_update = [ResUpdate() for i in range(depth)]
-        self.gc_blocks = [GCBlock("simple", [], pi_nodes, ii_nodes, activation=act)]
+        self.gc_blocks = [GCBlock(style, [], pi_nodes, ii_nodes, activation=act)]
         self.gc_blocks += [
-            GCBlock("simple", pp_nodes, pi_nodes, ii_nodes, activation=act)
+            GCBlock(style, pp_nodes, pi_nodes, ii_nodes, activation=act)
             for i in range(depth - 1)
         ]
         self.out_layers = [OutLayer(out_nodes, out_units) for i in range(depth)]
