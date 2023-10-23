@@ -149,8 +149,31 @@ class PILayer(tf.keras.layers.Layer):
 
 
 class PIXLayer(tf.keras.layers.Layer):
-    R"""`PIXLayer` takes the equalvariant properties ($\mathbb{P}_{ix\zeta}$, $\mathbb{P}_{jx\zeta}$) of a pair of atoms as input and outputs a set of
-    interactions for each pair. The `PXLayer` has no learnable variables and simply applies a linear transformation to an equivariant property tensor, resulting in a new tensor of the same shape.
+    R"""`PIXLayer` takes the equalvariant properties ${}^{3}\mathbb{P}_{ix\zeta}$ as input and outputs interactions for each pair ${}^{3}\mathbb{I}_{ijx\zeta}$. The `PIXLayer` has three styles, specified by the `style` argument:
+
+    `painn` & `simple`:
+
+    $$
+    \begin{aligned}
+    {}^{3}\mathbb{I}_{ijx\zeta} = \mathbf{1}_{j} {}^{3}\mathbb{P}_{ix\zeta} 
+    \end{aligned}
+    $$
+
+    `general`:
+
+    $$
+    \begin{aligned}
+    {}^{3}\mathbb{I}_{ijx\zeta} = W_{ijx\zeta}^{'} \mathbf{1}_{j}^{'} \mathbb{P}_{ix\zeta} + W_{ijx\zeta}^{''} \mathbb{1}_{j}^{''} \mathbb{P}_{ix\zeta}
+    \end{aligned}
+    $$
+
+    `newton`:
+
+    $$
+    \begin{aligned}
+    {}^{3}\mathbb{I}_{ijx\zeta} = \mathbf{1}_{j}^{'} {}^{3}\mathbb{P}_{ix\zeta}
+    \end{aligned} - \mathbf{1}_{j}^{''} {}^{3}\mathbb{P}_{ix\zeta}
+    $$
        
     """
 
@@ -174,13 +197,13 @@ class PIXLayer(tf.keras.layers.Layer):
         PILayer take a list of three tensors as input:
 
         - ind_2: [sparse indices](layers.md#sparse-indices) of pairs with shape `(n_pairs, 2)`
-        - prop: property tensor with shape `(n_atoms, n_prop)`
+        - prop: equalvariant tensor with shape `(n_atoms, x, n_prop)`
 
         Args:
-            tensors (list of tensors): list of `[ind_2, prop, basis]` tensors
+            tensors (list of tensors): list of `[ind_2, prop]` tensors
 
         Returns:
-            inter (tensor): interaction tensor with shape `(n_pairs, n_nodes[-1])`
+            inter (tensor): interaction tensor with shape `(n_pairs, x, n_nodes[-1])`
         """
         ind_2, px = tensors
         ind_i = ind_2[:, 0]
@@ -199,12 +222,28 @@ class PIXLayer(tf.keras.layers.Layer):
 
 
 class DotLayer(tf.keras.layers.Layer):
-    R"""`DotLayer` stands for the dot product($<,>$), and has no learnable variables, i.e.:
+    R"""`DotLayer` stands for the dot product($<,>$). `DotLayer` has three styles, specified by the `style` argument:
+
+    `painn` & `general`:
+
+    $$
+    \begin{aligned}
+    {}^{3}\mathbb{P}_{i\zeta} = \sum_x W_{ix\zeta}^{'} W_{ix\zeta}^{''}  {}^{3}\mathbb{P}_{ix\zeta} {}^{3}\mathbb{P}_{ix\zeta} 
+    \end{aligned}
+    $$
+
+    `simple`:
+
+    $$
+    \begin{aligned}
+    {}^{3}\mathbb{I}_{i\zeta} = \sum_x {}^{3}\mathbb{P}_{ix\zeta} {}^{3}\mathbb{P}_{ix\zeta}
+    \end{aligned} 
+    $$
     """
     def __init__(self, style: StyleType, **kwargs):
         """
         Args:
-            style (str): style of the layer, should be one of 'painn', 'newton', 'general'
+            style (str): style of the layer, should be one of 'painn', 'simple', 'general'
         """
         super(DotLayer, self).__init__()
         self.style = style
@@ -221,7 +260,16 @@ class DotLayer(tf.keras.layers.Layer):
 
 
     def call(self, tensor):
+        """
+        Args:
+            tensor (`tensor`): tensor to be dot producted
 
+        Raises:
+            NotImplementedError: if style `newton` is specified
+
+        Returns:
+            tensor: dot producted tensor
+        """
         if self.style == "painn" or self.style == "general":
             return tf.einsum("ixr,ixr->ir", self.wi(tensor), self.wj(tensor))
         elif self.style == "newton":
@@ -239,19 +287,21 @@ class ScaleLayer(tf.keras.layers.Layer):
     \end{aligned}
     $$
     """
-    def __init__(self, style: StyleType, **kwargs):
+    def __init__(self, **kwargs):
         """
         Args:
-            style (str): style of the layer, should be one of 'painn', 'newton', 'general'
+            style (str): style of the layer, should be one of `painn`, `newton`, `general`
         """
         super(ScaleLayer, self).__init__()
-        self.style = style
-
-    def build(self, shapes):
-        pass
 
     def __call__(self, tensor):
+        """
+        Args:
+            tensor (list of tensors): list of `[tensor, scalar]` tensors
 
+        Returns:
+            tensor: scaled tensor
+        """
         px, p1 = tensor
         return px * p1[:, None, :]
 
@@ -356,12 +406,11 @@ class GCBlock(tf.keras.layers.Layer):
 
         self.dot_layer = DotLayer(style=style)
 
-        self.scale1_layer = ScaleLayer(style=style)
-        self.scale2_layer = ScaleLayer(style=style)
-        self.scale3_layer = ScaleLayer(style=style)
+        self.scale1_layer = ScaleLayer()
+        self.scale2_layer = ScaleLayer()
+        self.scale3_layer = ScaleLayer()
 
     def call(self, tensors):
-        """TODO:"""
         ind_2, p1, p3, diff, basis = tensors
 
         p1 = self.pp1_layer(p1)
@@ -554,7 +603,7 @@ class PiNet2(tf.keras.Model):
             )
             output = self.out_layers[i]([tensors["ind_1"], p1, p3, output])
             tensors["p1"] = self.res_update[i]([tensors["p1"], p1])
-            # tensors["p3"] = self.res_update[i]([tensors["p3"], p3])
+            tensors["p3"] = self.res_update[i]([tensors["p3"], p3])
 
         output = self.ann_output([tensors["ind_1"], output])
         return output
