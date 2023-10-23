@@ -365,7 +365,7 @@ atom-centered <span class="arithmatex">\(\mathbb{P}_{i\alpha}\)</span> variable 
 </code></pre></div>
 <p>To accumulate pairwise predictions over neighbors (<span class="arithmatex">\(\mathbb{P}_{i\alpha} =
 \sum_{j} \mathbb{I}_{ij\alpha}\)</span>), use the <code>tf.scatter_nd</code> operation:</p>
-<div class="highlight"><pre><span></span><code><span class="n">P</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">gather_nd</span><span class="p">(</span><span class="n">ind_2</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">n_atoms</span><span class="p">,</span> <span class="n">n_alpha</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><span class="n">P</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">scatter_nd</span><span class="p">(</span><span class="n">ind_2</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">n_atoms</span><span class="p">,</span> <span class="n">n_alpha</span><span class="p">])</span>
 </code></pre></div>
 <p>Note that the number of atoms must be supplied since it cannot be inferred from
 <code>ind_2</code>.</p>
