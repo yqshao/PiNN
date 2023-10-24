@@ -251,8 +251,8 @@ class DotLayer(tf.keras.layers.Layer):
     def build(self, shapes):
 
         if self.style == "painn" or self.style == "general":
-            self.wi = tf.keras.layers.Dense(shapes[-1])
-            self.wj = tf.keras.layers.Dense(shapes[-1])
+            self.wi = tf.keras.layers.Dense(shapes[-1], activation=None)
+            self.wj = tf.keras.layers.Dense(shapes[-1], activation=None)
         elif self.style == "newton":
             raise NotImplementedError("Not implemented yet")
         elif self.style == "simple":
