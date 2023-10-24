@@ -13,3 +13,4 @@ _build/
 /datasets
 /*.tar
 ./vscode
+/*.tar
