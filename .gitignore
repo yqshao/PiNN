@@ -11,5 +11,6 @@ _build/
 /.nextflow*
 /work/
 /datasets
-/*.tar
 /models/
+/*.tar
+./vscode
