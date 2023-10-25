@@ -239,18 +239,48 @@
 <p>PiNN collects a small set of benchmarks that are continuously tested
 against (see <a href="../changelog/#conventions">version convention</a>). The benchmark datasets and trained
 models are accessible from the shared <a href="https://uppsala.box.com/v/teoroo-cmc-pinn-data">box folder</a>.</p>
-<h2 id="latest-benchmarks-v120">Latest benchmarks (v1.2.0)</h2>
-<p>TO-BE-GENERATED</p>
-<h2 id="run-manually">Run manually</h2>
+<h2 id="latest-benchmarks-v120dev0">Latest benchmarks (v1.2.0.dev0)</h2>
+<h3 id="qm91">QM9<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></h3>
+<p>Energy MAE: 15.0(std:0.83) meV.</p>
+<h3 id="md172">MD17<sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup></h3>
+<ul>
+<li>aspirin:   Energy MAE: 19.47(std:9.31) meV; Force MAE: 13.65(std:1.19) meV/Å.</li>
+<li>ethanol:   Energy MAE: 2.62(std:0.38) meV;  Force MAE: 1.98(std:0.08) meV/Å.</li>
+<li>uracil:    Energy MAE: 7.44(std:4.00) meV;  Force MAE: 6.72(std:0.07) meV/Å.</li>
+</ul>
+<h2 id="reproducing-the-benchmark">Reproducing the benchmark</h2>
 <p>To manually run the benchmarks with the latest version of PiNN you
 will need to have <a href="https://www.nextflow.io/">Nextflow</a> and <a href="https://docs.sylabs.io/guides/latest/user-guide/">Singularity</a> installed.</p>
 <div class="highlight"><pre><span></span><code>nextflow run teoroo-cmc/pinn -r master
 </code></pre></div>
-<p>For developers, install PiNN in editable mode and run the benchmark
-from the <code>PiNN</code> folder:</p>
-<div class="highlight"><pre><span></span><code># git clone https://github.com/Teoroo-CMC/PiNN.git &amp;&amp; pip install -e PiNN
-nextflow run .
+<h2 id="for-developers">For developers</h2>
+<p>Install PiNN in editable mode and run the benchmark
+from the <code>PiNN</code> folder.  You will probably need to set up the
+development environments on an HPC cluster (e.g. ALVIS):</p>
+<div class="highlight"><pre><span></span><code>ml<span class="w"> </span>TensorFlow/2.6.0-foss-2021a-CUDA-11.3.1
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span><span class="nv">$HOME</span>/pinn-tf26
+<span class="nb">source</span><span class="w"> </span><span class="nv">$HOME</span>/pinn-tf26/bin/activate
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Teoroo-CMC/PiNN.git<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>PiNN
+<span class="nb">cd</span><span class="w"> </span>PiNN
 </code></pre></div>
+<p>And run the benchmark using a corresponding profile:</p>
+<div class="highlight"><pre><span></span><code>export SLURM_ACCOUNT=NAISS2023-5-282
+export SALLOC_ACCOUNT=$SLURM_ACCOUNT
+export SBATCH_ACCOUNT=$SLURM_ACCOUNT
+nextflow run . -profile alvis
+</code></pre></div>
+<p>Adjust the scheduler setup in <code>nextflow.config</code> if needed.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p><sup>1</sup> R. Ramakrishnan, P.O. Dral, M. Rupp, and O.A. von Lilienfeld, “<a href="https://doi.org/10.1038/sdata.2014.22">Quantum chemistry structures and properties of 134 kilo molecules</a>,” Sci. Data <strong>1</strong>, 140022 (2014).&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p><sup>1</sup> S. Chmiela, A. Tkatchenko, H.E. Sauceda, I. Poltavsky, K.T. Schütt, and K.-R. Müller, “<a href="https://doi.org/10.1126/sciadv.1603015">Machine learning of accurate energy-conserving molecular force fields</a>,” Sci. Adv. <strong>3</strong>(5), (2017).&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
     </div>
 
   </div>
