@@ -559,7 +559,8 @@ class PiNet2(tf.keras.Model):
         elif basis_type == "gaussian":
             self.basis_fn = GaussianBasis(center, gamma, rc, n_basis)
 
-        self.res_update = [ResUpdate() for i in range(depth)]
+        self.res_update1 = [ResUpdate() for i in range(depth)]
+        self.res_update3 = [ResUpdate() for i in range(depth)]
         self.gc_blocks = [GCBlock(style, [], pi_nodes, ii_nodes, activation=act)]
         self.gc_blocks += [
             GCBlock(style, pp_nodes, pi_nodes, ii_nodes, activation=act)
@@ -601,8 +602,8 @@ class PiNet2(tf.keras.Model):
                 [tensors["ind_2"], tensors["p1"], tensors["p3"], tensors["diff"], basis]
             )
             output = self.out_layers[i]([tensors["ind_1"], p1, p3, output])
-            tensors["p1"] = self.res_update[i]([tensors["p1"], p1])
-            tensors["p3"] = self.res_update[i]([tensors["p3"], p3])
+            tensors["p1"] = self.res_update1[i]([tensors["p1"], p1])
+            tensors["p3"] = self.res_update3[i]([tensors["p3"], p3])
 
         output = self.ann_output([tensors["ind_1"], output])
         return output
