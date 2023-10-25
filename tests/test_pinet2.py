@@ -40,7 +40,6 @@ class TestPiNet2:
 
         prop = tf.random.uniform((nsamples, ndims, nchannels))
         theta = 42.
-        rot = create_rot_mat(theta)
 
         dot = DotLayer('general')
         tf.debugging.assert_near(
@@ -56,7 +55,6 @@ class TestPiNet2:
 
         px = tf.random.uniform((nsamples, ndims, nchannels))
         p1 = tf.random.uniform((nsamples, nchannels))
-
 
         scaler = ScaleLayer()
         out = scaler([px, p1])
