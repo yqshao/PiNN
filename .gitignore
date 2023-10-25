@@ -12,3 +12,5 @@ _build/
 /work/
 /datasets
 /*.tar
+/models/
+*.log
