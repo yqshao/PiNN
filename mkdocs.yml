@@ -42,12 +42,13 @@ nav:
           - LJ Potential: notebooks/Learn_LJ_potential.ipynb
       - Develop:
           - Layer Debug: notebooks/Layer_debug.ipynb
+watch:
+  - pinn
 plugins:
   - bibtex:
       bib_file: "docs/references.bib"
       csl_file: "docs/jcp.csl"
-  - mkdocs-jupyter:
-      ignore_h1_titles: True
+  - mknotebooks
   - mkdocstrings:
       custom_templates: docs/templates
       handlers:
@@ -56,8 +57,6 @@ plugins:
             show_source: false
             show_root_toc_entry: false
             heading_level: 4
-      watch:
-        - pinn
   - mike
 theme:
   name: flux
