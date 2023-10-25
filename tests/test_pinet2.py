@@ -11,6 +11,9 @@ def create_rot_mat(theta):
         [0., np.sin(theta), np.cos(theta)]
     ], dtype=tf.float32)
 
+def rotate(x, theta):
+    rot = create_rot_mat(theta)
+    return tf.einsum('ixa,xy->iya', x, rot)
 
 class TestPiNet2:
 
@@ -22,14 +25,10 @@ class TestPiNet2:
         nchannels = 5
 
         prop = tf.random.uniform((nsamples, ndims, nchannels))
-        # create a rotation matrix
-        theta = 42.
-        rot = create_rot_mat(theta)
-        rot = tf.constant(rot, dtype=tf.float32)
 
         dot = DotLayer('simple')
         tf.debugging.assert_near(
-            dot(prop), dot(tf.einsum('ixa,xy->iya', prop, rot))
+            dot(prop), dot(rotate(prop, 42.))
         )
 
     @pytest.mark.forked
@@ -45,7 +44,7 @@ class TestPiNet2:
 
         dot = DotLayer('general')
         tf.debugging.assert_near(
-            dot(prop), dot(tf.einsum('ixa,xy->iya', prop, rot))
+            dot(prop), dot(rotate(prop, theta))
         )
 
     @pytest.mark.forked
@@ -58,13 +57,12 @@ class TestPiNet2:
         px = tf.random.uniform((nsamples, ndims, nchannels))
         p1 = tf.random.uniform((nsamples, nchannels))
 
-        rot = create_rot_mat(42.)
 
         scaler = ScaleLayer()
         out = scaler([px, p1])
         assert out.shape == (nsamples, ndims, nchannels)
         tf.debugging.assert_near(
-            tf.einsum('ixa,xy->iya', scaler([px, p1]), rot), scaler([tf.einsum('ixa,xy->iya', px, rot), p1])
+            rotate(scaler([px, p1]), 42.), scaler([rotate(px, 42.), p1])
         )
 
     @pytest.mark.forked
@@ -76,13 +74,12 @@ class TestPiNet2:
         nnbors = 3
         px = tf.random.uniform((nsamples, ndims, nchannels))
         ind_2 = tf.random.uniform((nnbors, 2), maxval=nsamples, dtype=tf.int32)
-        rot = create_rot_mat(42.)
 
         pix = PIXLayer('simple')
         out = pix([ind_2, px])
         assert out.shape == (nnbors, ndims, nchannels)
         tf.debugging.assert_near(
-            tf.einsum('ixa,xy->iya', pix([ind_2, px]), rot), pix([ind_2, tf.einsum('ixa,xy->iya', px, rot)])
+            rotate(pix([ind_2, px]), 42.), pix([ind_2, rotate(px, 42.)])
         )
 
 
@@ -95,11 +92,10 @@ class TestPiNet2:
         nnbors = 3
         px = tf.random.uniform((nsamples, ndims, nchannels))
         ind_2 = tf.random.uniform((nnbors, 2), maxval=nsamples, dtype=tf.int32)
-        rot = create_rot_mat(42.)
 
         pix = PIXLayer('general')
         out = pix([ind_2, px])
         assert out.shape == (nnbors, ndims, nchannels)
         tf.debugging.assert_near(
-            tf.einsum('ixa,xy->iya', pix([ind_2, px]), rot), pix([ind_2, tf.einsum('ixa,xy->iya', px, rot)])
+            rotate(pix([ind_2, px]), 42.), pix([ind_2, rotate(px, 42.)])
         )
