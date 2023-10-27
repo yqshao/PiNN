@@ -12,5 +12,7 @@ _build/
 /work/
 /datasets
 /*.tar
+./vscode
+/*.tar
 /models/
 *.log

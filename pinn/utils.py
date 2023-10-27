@@ -33,7 +33,7 @@ def init_params(params, dataset):
     # Auto-fill atom_types when reasonable
     if 'PiNet' in params['network']['name']\
        and 'atom_types' not in params['network']['params']:
-        params['network']['parmas']['atom_types'] = elems
+        params['network']['params']['atom_types'] = elems
 
     if params['network']['name']=='BPNN'\
        and 'fp_scale' in params['network']['params']\

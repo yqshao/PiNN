@@ -19,7 +19,7 @@ workflow {
   | set {ch_qm9}
 
   gen_md17.out
-  | combine(ch_pinet_pot)
+  | combine(ch_pinet_pot_nofrc)
   | combine(ch_seeds)
   | set {ch_md17}
 
