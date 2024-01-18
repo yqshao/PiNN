@@ -6,11 +6,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://teoroo-cmc.github.io/pinn/master/benchmarks/</loc>
-         <lastmod>2024-01-18</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://teoroo-cmc.github.io/pinn/master/changelog/</loc>
          <lastmod>2024-01-18</lastmod>
          <changefreq>daily</changefreq>
